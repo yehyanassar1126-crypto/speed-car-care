@@ -751,7 +751,43 @@ async function loadOilProducts() {
         console.error("السيرفر غير متصل (هذا طبيعي وأنت تختبر من الكمبيوتر محلياً)", error);
     }
 }
-        
+        // Send Feedback Function
+async function submitFeedback() {
+    const rating = document.getElementById('feedbackRating').value;
+    const type = document.getElementById('feedbackType').value;
+    const message = document.getElementById('feedbackMessage').value;
+    
+    // Get customer info from the top fields (if they filled them out)
+    const customerName = document.getElementById('customerName').value || "Unknown";
+    const customerPhone = document.getElementById('customerPhone').value || "No Phone";
+
+    // Check if the required fields are filled
+    if (!rating || !type || !message) {
+        alert("Please fill in the rating, type, and message before submitting.");
+        return;
+    }
+
+    try {
+        // Send the data to your Vercel server
+        const response = await fetch('/api/sendFeedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating, type, message, customerName, customerPhone })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert("Feedback sent successfully! Thank you. ✅");
+            document.getElementById('feedbackForm').reset();
+        } else {
+            alert("Error sending feedback: " + result.error);
+        }
+    } catch (error) {
+        alert("Could not connect to the server. Please try again later.");
+        console.error(error);
+    }
+}
     </script>
  <script>
         window.addEventListener("DOMContentLoaded", async () => {
@@ -760,5 +796,6 @@ async function loadOilProducts() {
     </script>
 </body>
 </html>
+
 
 
