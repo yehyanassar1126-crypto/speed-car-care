@@ -12,5 +12,6 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0"
+     "@getbrevo/brevo": "^2.0.0"
   }
 }
