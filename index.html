@@ -639,10 +639,10 @@ async function removeService(category, index) {
         } else {
             alert("حصل خطأ: " + result.error);
         }
-    } catch (error) {
-        alert("فشل الاتصال بالخادم.");
-        console.error(error);
-    }
+        // } elif (error) {
+        //     alert("فشل الاتصال بالخادم.");
+        //     console.error(error);
+        // }
 }
 
         function updateInvoicesTable() {
@@ -760,3 +760,4 @@ async function loadOilProducts() {
     </script>
 </body>
 </html>
+
