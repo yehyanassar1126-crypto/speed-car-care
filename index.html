@@ -639,10 +639,10 @@ async function removeService(category, index) {
         } else {
             alert("حصل خطأ: " + result.error);
         }
-        // } elif (error) {
-        //     alert("فشل الاتصال بالخادم.");
-        //     console.error(error);
-        // }
+        } catch (error) {
+             alert("فشل الاتصال بالخادم.");
+             console.error(error);
+        }
 }
 
         function updateInvoicesTable() {
