@@ -741,12 +741,14 @@ async function loadOilProducts() {
         const select = document.getElementById("oilSelect");
         select.innerHTML = '<option value="">-- اختر زيت أو منتج --</option>';
 
-        oilProducts.forEach(p => {
-            select.innerHTML += `
-                <option value="${p.price}" data-id="${p.id}">
-                    ${p.name} - ${p.price} ج.م (المخزون: ${p.stock})
-                </option>`;
-        });
+oilProducts.forEach(p => {
+    select.innerHTML += `
+        <option value="${p.price}" data-id="${p.id}">
+            ${p.name} - ${p.price} ج.م 
+            (المخزون: ${p.stock}) 
+            - تغيير بعد ${p.max_kilometers} كم
+        </option>`;
+});
     } catch (error) {
         console.error("السيرفر غير متصل (هذا طبيعي وأنت تختبر من الكمبيوتر محلياً)", error);
     }
@@ -760,8 +762,3 @@ async function loadOilProducts() {
     </script>
 </body>
 </html>
-
-
-
-
-
