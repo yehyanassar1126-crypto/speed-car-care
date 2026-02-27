@@ -399,14 +399,26 @@ async function addOilService() {
     }
 
     // خصم الجركن محلياً
+   // Get the maxKm from the HTML element
+    const maxKm = selectedOption.dataset.km;
+
+    // خصم الجركن محلياً
     product.stock--;
 
-    // تحديث الواجهة فوراً للعميل
-    selectedServices.oil.push({ name: product.name, price: parseFloat(product.price), id: product.id });
+    // Update the UI immediately (Now including maxKm)
+    selectedServices.oil.push({ 
+        name: product.name, 
+        price: parseFloat(product.price), 
+        id: product.id,
+        maxKm: maxKm 
+    });
+    
     customerPoints.oil++;
     updatePointsDisplay();
     updateSelectedItems('oil');
+    autoCalculateNextKm(); // Triggers the calculation
     calculateTotal();
+    // This is now globally available!
 
     // إرسال التحديث للسيرفر المخفي
     try {
@@ -459,7 +471,25 @@ async function removeService(category, index) {
         await loadOilProducts();
     }
 }
+function autoCalculateNextKm() {
+    const oldKmInput = document.getElementById('oldKm');
+    const newKmInput = document.getElementById('newKm');
+    
+    const oldKm = parseInt(oldKmInput.value);
 
+    if (!oldKm || selectedServices.oil.length === 0) {
+        return;
+    }
+
+    // Get the last added oil
+    const lastOil = selectedServices.oil[selectedServices.oil.length - 1];
+
+    if (!lastOil || !lastOil.maxKm || lastOil.maxKm === "0") return;
+
+    // Calculate and set the new KM
+    const nextKm = oldKm + parseInt(lastOil.maxKm);
+    newKmInput.value = nextKm;
+}
         function addCarpetService() {
             const typeSelect = document.getElementById('carpetTypeSelect');
             const metersInput = document.getElementById('carpetMeters');
@@ -720,6 +750,25 @@ async function removeService(category, index) {
                 document.getElementById('selected' + cat).innerHTML = '';
             });
             calculateTotal();
+            function autoCalculateNextKm() {
+            const oldKmInput = document.getElementById('oldKm');
+            const newKmInput = document.getElementById('newKm');
+
+            const oldKm = parseInt(oldKmInput.value);
+
+            if (!oldKm || selectedServices.oil.length === 0) {
+                return;
+            }
+
+            // ناخد آخر زيت مضاف
+            const lastOil = selectedServices.oil[selectedServices.oil.length - 1];
+
+            if (!lastOil.maxKm) return;
+
+            const nextKm = oldKm + parseInt(lastOil.maxKm);
+
+            newKmInput.value = nextKm;
+        }
             
             // Call the function here to refresh the list when the form resets
             loadOilProducts(); 
@@ -733,7 +782,7 @@ async function loadOilProducts() {
         const result = await response.json();
 
         if (!result.success) {
-            console.error("مشكلة في تحميل الزيوت:", result.error);
+            console.error("Error loading oils:", result.error);
             return;
         }
 
@@ -741,24 +790,26 @@ async function loadOilProducts() {
         const select = document.getElementById("oilSelect");
         select.innerHTML = '<option value="">-- اختر زيت أو منتج --</option>';
 
-oilProducts.forEach(p => {
-    select.innerHTML += `
-        <option value="${p.price}" data-id="${p.id}">
-            ${p.name} - ${p.price} ج.م 
-            (المخزون: ${p.stock}) 
-            - تغيير بعد ${p.max_kilometers} كم
-        </option>`;
-});
+        oilProducts.forEach(p => {
+            // Notice the data-km attribute added here!
+            select.innerHTML += `
+                <option value="${p.price}" data-id="${p.id}" data-km="${p.max_kilometers || 0}">
+                    ${p.name} - ${p.price} ج.م  
+                    (المخزون: ${p.stock})  
+                    - تغيير بعد ${p.max_kilometers || 0} كم
+                </option>`;
+        });
     } catch (error) {
-        console.error("السيرفر غير متصل (هذا طبيعي وأنت تختبر من الكمبيوتر محلياً)", error);
+        console.error("Server not connected", error);
     }
 }
-
     </script>
  <script>
-        window.addEventListener("DOMContentLoaded", async () => {
+        window.addEventListener("DOMContentLoaded" , async () => {
+            document.getElementById('oldKm').addEventListener('input', autoCalculateNextKm);
             await loadOilProducts();
         });
+        
     </script>
 </body>
 </html>
