@@ -1,16 +1,8 @@
 {
-  "name": "wash-machine",
+  "name": "speed-car-care-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@supabase/supabase-js": "^2.98.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "@getbrevo/brevo": "^2.0.0"
   }
 }
