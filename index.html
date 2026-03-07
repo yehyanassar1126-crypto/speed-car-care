@@ -644,8 +644,7 @@ function autoCalculateNextKm() {
         total: total
     };
 
-    try {
-        // تجميع البيانات والنقاط لإرسالها للسيرفر
+  try {
         const payload = {
             invoiceData: invoiceData,
             points: {
@@ -664,17 +663,36 @@ function autoCalculateNextKm() {
         const result = await response.json();
 
         if (result.success) {
-            alert("تم حفظ الفاتورة بنجاح ✅");
+            // Calculate total raw minutes (45 minutes per person)
+            const waitTimeMinutes = result.queueNumber * 45;
+            
+            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
+            
+            // Append time only if there is a queue
+            if (result.queueNumber > 0) {
+                const hours = Math.floor(waitTimeMinutes / 60);
+                const minutes = waitTimeMinutes % 60;
+                
+                let timeString = "";
+                if (hours > 0) {
+                    timeString += `${hours} ساعة`;
+                    if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
+                } else {
+                    timeString = `${minutes} دقيقة`;
+                }
+                
+                alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
+            }
+
+            alert(alertMessage);
             resetForm();
         } else {
             alert("حصل خطأ: " + result.error);
         }
-        } catch (error) {
-            // alert("فشل الاتصال بالخادم.");
-             console.error(error);
-        }
-}
-
+    } catch (error) {
+        console.error(error);
+    }
+    }
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
             if (todayInvoices.length === 0) {
@@ -846,6 +864,34 @@ async function submitFeedback() {
         console.error(error);
     }
 }
+     document.getElementById('customerPhone').addEventListener('blur', async function() {
+    const phone = this.value;
+    if (!phone) return;
+
+    try {
+        const response = await fetch('/api/getCustomer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+        });
+        const result = await response.json();
+
+        if (result.found) {
+            document.getElementById('customerName').value = result.customer_name;
+            document.getElementById('carNumber').value = result.car_number;
+            
+            // Populate the global points object with the retrieved data
+            customerPoints.wash = result.points.wash_points || 0;
+            customerPoints.oil = result.points.oil_points || 0;
+            customerPoints.carpet = result.points.carpet_points || 0;
+            updatePointsDisplay();
+            
+            alert(`بيانات العميل مسجلة مسبقاً.\nنقاط الغسيل: ${customerPoints.wash} | نقاط الزيت: ${customerPoints.oil} | نقاط السجاد: ${customerPoints.carpet}`);
+        }
+    } catch (error) {
+        console.error("Lookup failed", error);
+    }
+});
     </script>
 </body>
 </html>
