@@ -47,6 +47,9 @@ export default async function handler(req, res) {
                 <h2 style="color: #1a1a2e;">مطلوب مراجعة فاتورة جديدة</h2>
                 <p><strong>العميل:</strong> ${invoiceData.customer_name || 'غير محدد'}</p>
                 <p><strong>رقم التليفون:</strong> ${invoiceData.mobile_number || 'غير محدد'}</p>
+                <p><strong>خدمات الغسيل:</strong> ${invoiceData.wash_services || 'لا يوجد'}</p>
+                <p><strong>خدمات الزيت:</strong> ${invoiceData.oil_services || 'لا يوجد'}</p>
+                <p><strong>خدمات السجاد:</strong> ${invoiceData.carpet_services || 'لا يوجد'}</p>
                 <p><strong>الإجمالي:</strong> ${invoiceData.total} ج.م</p>
                 
                 <hr style="border-top: 1px solid #ccc;">
@@ -67,3 +70,4 @@ export default async function handler(req, res) {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
+
