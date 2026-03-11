@@ -671,13 +671,13 @@ function autoCalculateNextKm() {
              let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
             أمامك في الطابور: ${result.queueNumber} عملاء`;
             
-             if(result.carpetCode){
-                 alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
-             }
+            //  if(result.carpetCode){
+            //      alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
+            //  }
             
-             alert(alertMessage);
-             resetForm();
-            }
+            //  alert(alertMessage);
+            //  resetForm();
+            // }
             
             // Append time only if there is a queue
             if (result.queueNumber > 0) {
@@ -906,6 +906,7 @@ async function submitFeedback() {
     </script>
 </body>
 </html>
+
 
 
 
