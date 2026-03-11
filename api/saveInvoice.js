@@ -81,11 +81,16 @@ export default async function handler(req, res) {
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
         // 5. Return success WITH the calculated queue number
-        return res.status(200).json({ success: true, queueNumber: queueNumber });
+        return res.status(200).json({
+        success: true,
+        queueNumber: queueNumber,
+        carpetCode: carpetCode
+    });
 
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
+
 
 
