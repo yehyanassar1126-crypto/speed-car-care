@@ -666,14 +666,18 @@ function autoCalculateNextKm() {
 
         const result = await response.json();
 
-        if (result.success) {
-            // Calculate total raw minutes (30 minutes per person)
-            const waitTimeMinutes = result.queueNumber * 30;
+            if (result.success) {
             
-            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
+             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
+            أمامك في الطابور: ${result.queueNumber} عملاء`;
+            
              if(result.carpetCode){
-             alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
-         }
+                 alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
+             }
+            
+             alert(alertMessage);
+             resetForm();
+            }
             
             // Append time only if there is a queue
             if (result.queueNumber > 0) {
@@ -902,6 +906,7 @@ async function submitFeedback() {
     </script>
 </body>
 </html>
+
 
 
 
