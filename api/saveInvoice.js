@@ -72,7 +72,6 @@ try {
                 <p><strong>خدمات الزيت:</strong> ${invoiceData.oil_services || 'لا يوجد'}</p>
                 <p><strong>خدمات السجاد:</strong> ${invoiceData.carpet_services || 'لا يوجد'}</p>
                 
-                // ${invoiceData.carpet_code ? `<p><strong>كود السجاد:</strong> ${invoiceData.carpet_code}</p>` : ""}
                 
                 <p><strong>الإجمالي:</strong> ${invoiceData.total} ج.م</p>
                 
@@ -98,6 +97,7 @@ try {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
+
 
 
 
