@@ -8,6 +8,23 @@ export default async function handler(req, res) {
 
     try {
         const { invoiceData, points } = req.body;
+        // Generate carpet code if carpet service exists
+        let carpetCode = null;
+        
+        if (invoiceData.carpet_services && invoiceData.carpet_services !== "") {
+        
+            const { data: lastCode } = await supabase
+                .from("invoices")
+                .select("carpet_code")
+                .order("carpet_code", { ascending: false })
+                .limit(1);
+        
+            carpetCode = lastCode && lastCode.length
+                ? lastCode[0].carpet_code + 1
+                : 100;
+        
+            invoiceData.carpet_code = carpetCode;
+        }
 
         // 1. Stage the data in the pending table
         const { data: pendingData, error: pendingError } = await supabase
@@ -70,4 +87,5 @@ export default async function handler(req, res) {
         return res.status(500).json({ success: false, error: error.message });
     }
 }
+
 
