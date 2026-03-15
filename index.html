@@ -300,23 +300,39 @@
 
                 const result = await response.json();
 
-                if (result.success) {
-                    let msg = `<div style="text-align:right">✅ تم الحفظ بنجاح.<br>رقم الطابور: <b>${result.queueNumber}</b>`;
-                    if (result.carpetCode) msg += `<br>كود السجاد: <b style="color:#ffd700">${result.carpetCode}</b>`;
-                    msg += `</div>`;
+if (result.success) {
 
-                    Swal.fire({
-                        title: 'تمت العملية',
-                        html: msg,
-                        icon: 'success',
-                        background: '#1a1a2e',
-                        color: '#fff',
-                        confirmButtonColor: '#e94560'
-                    });
-                    resetForm();
-                } else {
-                    Swal.fire('خطأ', result.error, 'error');
-                }
+    let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
+أمامك في الطابور: ${result.queueNumber} عملاء`;
+
+    if(result.carpetCode){
+        alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
+    }
+
+    if (result.queueNumber > 0) {
+
+        const waitTimeMinutes = result.waitTimeMinutes || 0;
+
+        const hours = Math.floor(waitTimeMinutes / 60);
+        const minutes = waitTimeMinutes % 60;
+
+        let timeString = "";
+        if (hours > 0) {
+            timeString += `${hours} ساعة`;
+            if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
+        } else {
+            timeString = `${minutes} دقيقة`;
+        }
+
+        alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
+    }
+
+    alert(alertMessage);
+    resetForm();
+
+} else {
+    alert("حصل خطأ أثناء حفظ الفاتورة");
+}
             } catch (e) {
                 Swal.fire('خطأ', 'فشل الاتصال بالسيرفر', 'error');
             }
