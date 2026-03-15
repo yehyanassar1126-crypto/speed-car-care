@@ -8,8 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <style>
         :root {
             --primary-color: #1a1a2e;
@@ -37,321 +35,6 @@
         }
         .card-header {
             background: rgba(233,69,96,0.2);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-weight: bold;
-        }
-        .form-control, .form-select {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white !important; /* Fixed visibility */
-        }
-        .form-control:focus, .form-select:focus {
-            background: rgba(255,255,255,0.15);
-            border-color: var(--accent-color);
-            color: white;
-            box-shadow: none;
-        }
-        .form-control::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-        option { color: black; } /* To see text in dropdown */
-        .btn-primary {
-            background: var(--accent-color);
-            border: none;
-        }
-        .btn-primary:hover { background: #c62a4b; }
-        .selected-item {
-            background: rgba(233,69,96,0.3);
-            padding: 8px 12px;
-            margin: 5px 0;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .points-badge {
-            background: linear-gradient(45deg, #ffd700, #ffaa00);
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-        }
-        .total-display {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-align: center;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas fa-car-wash"></i> Speed Car Care</a>
-            <div class="d-flex gap-2 flex-wrap">
-                <span class="points-badge"><i class="fas fa-tint"></i> غسيل: <span id="washPoints">0</span></span>
-                <span class="points-badge"><i class="fas fa-oil-can"></i> زيت: <span id="oilPoints">0</span></span>
-                <span class="points-badge"><i class="fas fa-chair"></i> سجاد: <span id="carpetPoints">0</span></span>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid p-4">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-user"></i> بيانات العميل</div>
-                    <div class="card-body">
-                        <input type="text" class="form-control mb-2" id="customerName" placeholder="اسم العميل">
-                        <input type="tel" class="form-control" id="customerPhone" placeholder="رقم التليفون">
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header"><i class="fas fa-car"></i> بيانات السيارة</div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-4"><input type="text" class="form-control" id="carNumber" placeholder="رقم السيارة"></div>
-                            <div class="col-4"><input type="number" class="form-control" id="oldKm" placeholder="العداد الحالي"></div>
-                            <div class="col-4"><input type="number" class="form-control" id="newKm" placeholder="العداد القادم" readonly></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <ul class="nav nav-tabs" id="serviceTabs">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#washTab">الغسيل</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#oilTab">الزيت</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#carpetTab">السجاد</button></li>
-                </ul>
-                
-                <div class="tab-content p-3 card" style="border-top: none; border-radius: 0 0 15px 15px;">
-                    <div class="tab-pane fade show active" id="washTab">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <select class="form-select mb-2" id="washSelect">
-                                    <option value="">-- اختر خدمة غسيل --</option>
-                                    <option value="50">غسيل خارجي عادي - 50 ج.م</option>
-                                    <option value="100">غسيل كامل - 100 ج.م</option>
-                                    <option value="150">غسيل دفع رباعي - 150 ج.م</option>
-                                    <option value="400">تنظيف فرش - 400 ج.م</option>
-                                </select>
-                                <button class="btn btn-primary w-100" onclick="addWashService()">إضافة خدمة</button>
-                            </div>
-                            <div class="col-md-6" id="selectedWash"></div>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="oilTab">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <select class="form-select mb-2" id="oilSelect">
-                                    <option value="">-- اختر نوع الزيت --</option>
-                                    <option value="800" data-km="5000" data-id="1">شل 5000 كم - 800 ج.م</option>
-                                    <option value="1200" data-km="10000" data-id="2">موبيل 10000 كم - 1200 ج.م</option>
-                                </select>
-                                <button class="btn btn-primary w-100" onclick="addOilService()">إضافة زيت</button>
-                            </div>
-                            <div class="col-md-6" id="selectedOil"></div>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane fade" id="carpetTab">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <select class="form-select mb-2" id="carpetTypeSelect">
-                                    <option value="25">سجاد عادي - 25 ج.م/متر</option>
-                                    <option value="70">سجاد حرير/يدوي - 70 ج.م/متر</option>
-                                </select>
-                                <input type="number" class="form-control mb-2" id="carpetMeters" placeholder="عدد الأمتار">
-                                <button class="btn btn-primary w-100" onclick="addCarpetService()">إضافة سجاد</button>
-                            </div>
-                            <div class="col-md-6" id="selectedCarpet"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-3"><h5>غسيل: <span id="washTotal">0</span></h5></div>
-                            <div class="col-md-3"><h5>زيت: <span id="oilTotal">0</span></h5></div>
-                            <div class="col-md-3"><h5>سجاد: <span id="carpetTotal">0</span></h5></div>
-                            <div class="col-md-3"><div class="total-display" id="grandTotal">0.00</div></div>
-                        </div>
-                        <div class="text-center mt-4">
-                            <button class="btn btn-primary btn-lg px-5" onclick="saveInvoice()">
-                                <i class="fas fa-save"></i> حفظ وإرسال الفاتورة
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let selectedServices = { wash: [], oil: [], carpet: [] };
-        let customerPoints = { wash: 0, oil: 0, carpet: 0 };
-
-        function addWashService() {
-            const select = document.getElementById('washSelect');
-            const option = select.options[select.selectedIndex];
-            if (!option.value) return;
-
-            selectedServices.wash.push({ name: option.text.split('-')[0].trim(), price: parseFloat(option.value) });
-            customerPoints.wash++;
-            updateUI();
-        }
-
-        function addOilService() {
-            const select = document.getElementById('oilSelect');
-            const option = select.options[select.selectedIndex];
-            if (!option.value) return;
-
-            const km = parseInt(option.dataset.km || 0);
-            selectedServices.oil.push({ name: option.text.split('-')[0].trim(), price: parseFloat(option.value), km: km });
-            customerPoints.oil++;
-            
-            // Auto calculate next KM
-            const currentKm = parseInt(document.getElementById('oldKm').value || 0);
-            if (currentKm > 0) document.getElementById('newKm').value = currentKm + km;
-            
-            updateUI();
-        }
-
-        function addCarpetService() {
-            const select = document.getElementById('carpetTypeSelect');
-            const meters = parseFloat(document.getElementById('carpetMeters').value || 0);
-            if (meters <= 0) return Swal.fire('تنبيه', 'أدخل عدد الأمتار', 'warning');
-
-            const price = parseFloat(select.value) * meters;
-            selectedServices.carpet.push({ name: select.options[select.selectedIndex].text.split('-')[0].trim() + ` (${meters}م)`, price: price });
-            customerPoints.carpet++;
-            updateUI();
-        }
-
-        function removeItem(category, index) {
-            selectedServices[category].splice(index, 1);
-            customerPoints[category]--;
-            updateUI();
-        }
-
-        function updateUI() {
-            ['wash', 'oil', 'carpet'].forEach(cat => {
-                const container = document.getElementById(`selected${cat.charAt(0).toUpperCase() + cat.slice(1)}`);
-                container.innerHTML = selectedServices[cat].map((item, i) => `
-                    <div class="selected-item">
-                        <span>${item.name}</span>
-                        <span>${item.price} ج.م <i class="fas fa-times text-danger ms-2" style="cursor:pointer" onclick="removeItem('${cat}', ${i})"></i></span>
-                    </div>
-                `).join('');
-                
-                document.getElementById(`${cat}Points`).textContent = customerPoints[cat];
-                document.getElementById(`${cat}Total`).textContent = selectedServices[cat].reduce((sum, i) => sum + i.price, 0).toFixed(2);
-            });
-
-            const total = Object.values(selectedServices).flat().reduce((sum, i) => sum + i.price, 0);
-            document.getElementById('grandTotal').textContent = total.toFixed(2);
-        }
-
-        async function saveInvoice() {
-            const name = document.getElementById('customerName').value;
-            const phone = document.getElementById('customerPhone').value;
-            const total = parseFloat(document.getElementById('grandTotal').textContent);
-
-            if (!name || !phone) return Swal.fire('خطأ', 'برجاء إكمال بيانات العميل', 'error');
-            if (total <= 0) return Swal.fire('تنبيه', 'برجاء إضافة خدمات أولاً', 'info');
-
-            // Show Loading
-            Swal.fire({ title: 'جاري الحفظ...', didOpen: () => Swal.showLoading(), background: '#1a1a2e', color: '#fff' });
-
-            const payload = {
-                invoiceData: {
-                    customer_name: name,
-                    mobile_number: phone,
-                    car_number: document.getElementById('carNumber').value,
-                    total: total,
-                    wash_services: selectedServices.wash.map(i => i.name).join(' | '),
-                    oil_services: selectedServices.oil.map(i => i.name).join(' | '),
-                    carpet_services: selectedServices.carpet.map(i => i.name).join(' | ')
-                },
-                points: customerPoints
-            };
-
-            try {
-                const response = await fetch('/api/saveInvoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-const result = await response.json();
-console.log("API RESULT:", result);
-
-if (result.success) {
-
-    let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
-أمامك في الطابور: ${result.queueNumber} عملاء`;
-
-    if(result.carpetCode){
-        alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
-    }
-
-    if (result.queueNumber > 0) {
-
-        const waitTimeMinutes = result.waitTimeMinutes || 0;
-
-        const hours = Math.floor(waitTimeMinutes / 60);
-        const minutes = waitTimeMinutes % 60;
-
-        let timeString = "";
-        if (hours > 0) {
-            timeString += `${hours} ساعة`;
-            if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
-        } else {
-            timeString = `${minutes} دقيقة`;
-        }
-
-        alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
-    }
-
-    alert(alertMessage);
-    resetForm();
-
-} else {
-    alert("حصل خطأ أثناء حفظ الفاتورة");
-}
-            } catch (e) {
-                Swal.fire('خطأ', 'فشل الاتصال بالسيرفر', 'error');
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('customerName').value = '';
-            document.getElementById('customerPhone').value = '';
-            document.getElementById('carNumber').value = '';
-            document.getElementById('oldKm').value = '';
-            document.getElementById('newKm').value = '';
-            selectedServices = { wash: [], oil: [], carpet: [] };
-            customerPoints = { wash: 0, oil: 0, carpet: 0 };
-            updateUI();
-        }
-    </script>
-</body>
-</html>            background: rgba(233,69,96,0.2);
             border-bottom: 1px solid rgba(255,255,255,0.1);
             font-weight: bold;
         }
@@ -495,8 +178,7 @@ if (result.success) {
                                     <option value="50">1. غسيل خارجي عادي - 50 ج.م</option>
                                     <option value="50">2. غسيل داخلي - 50 ج.م</option>
                                     <option value="100">3. غسيل كامل - 100 ج.م</option>
-                                    <option value="150">4. غسيل دفع رباعي  - 150 ج.م</option>
-                                    <option value="120">4. غسيل فان - 120 ج.م</option>
+                                    <option value="150">4. غسيل دفع رباعي / فان - 150 ج.م</option>
                                     <option value="50">7. تلميع الشمع (Wax) - 50 ج.م</option>
                                     <option value="50">9. تلميع الإطارات - 50 ج.م</option>
                                     <option value="400">12. تنظيف الفرش - 400 ج.م</option>
@@ -507,9 +189,6 @@ if (result.success) {
                                     <option value="20">18. تغيير فلتر - 20 ج.م</option>
                                     <option value="50">19. تشحيم الأبواب - 50 ج.م</option>
                                     <option value="50">20. غسيل موتور - 50 ج.م</option>
-                                    <option value="50">21. غسيل موتوسيكل - 50 ج.م</option>
-                                    <option value="30">22. غسيل شنطه العربيه - 30 ج.م</option>
-                                    <option value="50">23. غسيل تلميع زجاج - 50 ج.م</option>
                                 </select>
                                 <button class="btn btn-primary" onclick="addWashService()">
                                     <i class="fas fa-plus"></i> إضافة
@@ -643,7 +322,7 @@ if (result.success) {
                                 <!-- Message Textarea -->
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label" style="color: rgba(255,255,255,0.8);">ملاحظاتك (Your Comments)</label>
-                                    <textarea class="form-control" id="feedbackMessage" rows="3" placeholder="اكتب ملاحظاتك أو مقترحاتك هنا..." ></textarea>
+                                    <textarea class="form-control" id="feedbackMessage" rows="3" placeholder="اكتب ملاحظاتك أو مقترحاتك هنا..." required></textarea>
                                 </div>
                             </div>
                             
@@ -984,43 +663,36 @@ function autoCalculateNextKm() {
         const result = await response.json();
 
         if (result.success) {
-        
-            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
-        أمامك في الطابور: ${result.queueNumber} عملاء`;
-        
-            if(result.carpetCode){
-                alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
-            }
-        
+            // Calculate total raw minutes (45 minutes per person)
+            const waitTimeMinutes = result.queueNumber * 45;
+            
+            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
+            
+            // Append time only if there is a queue
             if (result.queueNumber > 0) {
-        
-                const waitTimeMinutes = result.waitTimeMinutes || 0;
-        
                 const hours = Math.floor(waitTimeMinutes / 60);
                 const minutes = waitTimeMinutes % 60;
-        
+                
                 let timeString = "";
-        
                 if (hours > 0) {
                     timeString += `${hours} ساعة`;
                     if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
                 } else {
                     timeString = `${minutes} دقيقة`;
                 }
-        
+                
                 alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
             }
-        
+
             alert(alertMessage);
             resetForm();
-        
         } else {
-            alert("حصل خطأ أثناء حفظ الفاتورة");
+            alert("حصل خطأ: " + result.error);
         }
-              } catch (error) {
-            console.error(error);
-            alert("فشل الاتصال بالسيرفر");
-        }
+    } catch (error) {
+        console.error(error);
+    }
+    }
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
             if (todayInvoices.length === 0) {
