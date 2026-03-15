@@ -680,30 +680,26 @@ function autoCalculateNextKm() {
             // }
             
             // Append time only if there is a queue
-            if (result.queueNumber > 0) {
-                const hours = Math.floor(waitTimeMinutes / 60);
-                const minutes = waitTimeMinutes % 60;
-                
-                let timeString = "";
-                if (hours > 0) {
-                    timeString += `${hours} ساعة`;
-                    if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
-                } else {
-                    timeString = `${minutes} دقيقة`;
-                }
-                
-                alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
-            }
+           if (result.queueNumber > 0) {
 
-            alert(alertMessage);
-            resetForm();
-        } else {
-            alert("حصل خطأ: " + result.error);
-        }
-    } catch (error) {
-        console.error(error);
+    const waitTimeMinutes = result.waitTimeMinutes || 0;
+
+    const hours = Math.floor(waitTimeMinutes / 60);
+    const minutes = waitTimeMinutes % 60;
+    
+    let timeString = "";
+    if (hours > 0) {
+        timeString += `${hours} ساعة`;
+        if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
+    } else {
+        timeString = `${minutes} دقيقة`;
     }
-    }
+    
+    alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
+}
+
+alert(alertMessage);
+resetForm();
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
             if (todayInvoices.length === 0) {
