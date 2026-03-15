@@ -983,40 +983,44 @@ function autoCalculateNextKm() {
 
         const result = await response.json();
 
-            if (result.success) {
-            
-             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
-            أمامك في الطابور: ${result.queueNumber} عملاء`;
-            
-             if(result.carpetCode){
-                 alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
-             }
-            
-            //  alert(alertMessage);
-            //  resetForm();
-            // }
-            
-            // Append time only if there is a queue
-         if (result.queueNumber > 0) {
-
-    const waitTimeMinutes = result.waitTimeMinutes || 0;
-
-    const hours = Math.floor(waitTimeMinutes / 60);
-    const minutes = waitTimeMinutes % 60;
-    
-    let timeString = "";
-    if (hours > 0) {
-        timeString += `${hours} ساعة`;
-        if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
-    } else {
-        timeString = `${minutes} دقيقة`;
-    }
-    
-    alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
-}
-
-alert(alertMessage);
-resetForm();
+        if (result.success) {
+        
+            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅
+        أمامك في الطابور: ${result.queueNumber} عملاء`;
+        
+            if(result.carpetCode){
+                alertMessage += `\nكود السجاد الخاص بك: ${result.carpetCode}`;
+            }
+        
+            if (result.queueNumber > 0) {
+        
+                const waitTimeMinutes = result.waitTimeMinutes || 0;
+        
+                const hours = Math.floor(waitTimeMinutes / 60);
+                const minutes = waitTimeMinutes % 60;
+        
+                let timeString = "";
+        
+                if (hours > 0) {
+                    timeString += `${hours} ساعة`;
+                    if (minutes > 0) timeString += ` و ${minutes} دقيقة`;
+                } else {
+                    timeString = `${minutes} دقيقة`;
+                }
+        
+                alertMessage += `\nالوقت المتوقع للانتظار: حوالي ${timeString}`;
+            }
+        
+            alert(alertMessage);
+            resetForm();
+        
+        } else {
+            alert("حصل خطأ أثناء حفظ الفاتورة");
+        }
+              } catch (error) {
+            console.error(error);
+            alert("فشل الاتصال بالسيرفر");
+        }
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
             if (todayInvoices.length === 0) {
