@@ -346,10 +346,6 @@
         let invoiceCounter = 1;
         let todayInvoices = [];
         let customerPoints = { wash: 0, oil: 0, carpet: 0 };
-        // عداد كود السجاد يبدأ من 100
-        let carpetCodeCounter = localStorage.getItem("carpetCodeCounter")
-        ? parseInt(localStorage.getItem("carpetCodeCounter"))
-        : 100;
 
         // Add Service Functions
         function addWashService() {
@@ -498,46 +494,34 @@ function autoCalculateNextKm() {
             const typeSelect = document.getElementById('carpetTypeSelect');
             const metersInput = document.getElementById('carpetMeters');
             const selectedOption = typeSelect.options[typeSelect.selectedIndex];
-        
+            
             const pricePerMeter = parseFloat(selectedOption.value);
             const meters = parseInt(metersInput.value);
-        
+            
             if (!meters || meters <= 0) {
                 alert('أدخل عدد الأمتار');
                 return;
             }
-        
+            
             const fullText = selectedOption.text;
             let typeName = fullText;
-        
             if (fullText.includes('-')) {
                 typeName = fullText.split('-')[0].trim();
             }
-        
+            
             const totalPrice = pricePerMeter * meters;
-        
-            // إنشاء كود السجاد
-            const carpetCode = carpetCodeCounter;
-            carpetCodeCounter++;
-        
-            // حفظ العداد
-            localStorage.setItem("carpetCodeCounter", carpetCodeCounter);
-        
+            
             selectedServices.carpet.push({
-                code: carpetCode,
                 name: `${typeName} - ${meters} متر`,
                 price: totalPrice,
                 meters: meters,
                 pricePerMeter: pricePerMeter
             });
-        
-            alert(`كود السجادة: ${carpetCode}`);
-        
+            
             customerPoints.carpet++;
             updatePointsDisplay();
             updateSelectedItems('carpet');
             calculateTotal();
-        
             metersInput.value = '';
         }
 
@@ -623,7 +607,7 @@ function autoCalculateNextKm() {
         }
 
         // Save Invoice
-    async function saveInvoice() {
+     async function saveInvoice() {
     const carNumber = document.getElementById('carNumber').value;
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
@@ -637,15 +621,6 @@ function autoCalculateNextKm() {
     const oldKm = document.getElementById('oldKm').value;
     const newKm = document.getElementById('newKm').value;
 
-    // Assign carpet codes if not yet assigned
-    selectedServices.carpet.forEach(item => {
-        if (!item.code) {
-            item.code = carpetCodeCounter++;
-        }
-    });
-    // حفظ الكاونتر في localStorage
-    localStorage.setItem("carpetCodeCounter", carpetCodeCounter);
-
     const wt = selectedServices.wash.reduce((s, i) => s + i.price, 0);
     const ot = selectedServices.oil.reduce((s, i) => s + i.price, 0);
     const ct = selectedServices.carpet.reduce((s, i) => s + i.price, 0);
@@ -653,7 +628,6 @@ function autoCalculateNextKm() {
     const washNames = selectedServices.wash.map(i => i.name).join(" | ");
     const oilNames = selectedServices.oil.map(i => i.name).join(" | ");
     const carpetNames = selectedServices.carpet.map(i => i.name).join(" | ");
-    const carpetCodes = selectedServices.carpet.map(i => i.code).join(" | ");
 
     const invoiceData = {
         customer_name: customerName,
@@ -667,11 +641,10 @@ function autoCalculateNextKm() {
         wash_services: washNames,
         oil_services: oilNames,
         carpet_services: carpetNames,
-        carpet_code: carpetCodes,
         total: total
     };
 
-    try {
+  try {
         const payload = {
             invoiceData: invoiceData,
             points: {
@@ -695,6 +668,7 @@ function autoCalculateNextKm() {
             
             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
             
+            // Append time only if there is a queue
             if (result.queueNumber > 0) {
                 const hours = Math.floor(waitTimeMinutes / 60);
                 const minutes = waitTimeMinutes % 60;
@@ -712,26 +686,12 @@ function autoCalculateNextKm() {
 
             alert(alertMessage);
             resetForm();
-
-            // إرسال الإيميل بشكل آمن
-            try {
-                await fetch('/api/sendInvoiceEmail', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ invoiceId: result.invoiceId })
-                });
-                console.log("📧 تم إرسال الإيميل بنجاح");
-            } catch (emailErr) {
-                console.warn("⚠️ فشل إرسال الإيميل لكن الفاتورة محفوظة:", emailErr);
-            }
+        } else {
+            alert("حصل خطأ: " + result.error);
         }
-    } catch (err) {
-        console.error("❌ خطأ في حفظ الفاتورة:", err);
-        alert("حصل خطأ أثناء حفظ الفاتورة، حاول مرة أخرى");
+    } catch (error) {
+        console.error(error);
     }
-
-    updatePointsDisplay();
-} 
     }
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
