@@ -346,6 +346,10 @@
         let invoiceCounter = 1;
         let todayInvoices = [];
         let customerPoints = { wash: 0, oil: 0, carpet: 0 };
+        // عداد كود السجاد يبدأ من 100
+        let carpetCodeCounter = localStorage.getItem("carpetCodeCounter")
+        ? parseInt(localStorage.getItem("carpetCodeCounter"))
+        : 100;
 
         // Add Service Functions
         function addWashService() {
@@ -494,34 +498,46 @@ function autoCalculateNextKm() {
             const typeSelect = document.getElementById('carpetTypeSelect');
             const metersInput = document.getElementById('carpetMeters');
             const selectedOption = typeSelect.options[typeSelect.selectedIndex];
-            
+        
             const pricePerMeter = parseFloat(selectedOption.value);
             const meters = parseInt(metersInput.value);
-            
+        
             if (!meters || meters <= 0) {
                 alert('أدخل عدد الأمتار');
                 return;
             }
-            
+        
             const fullText = selectedOption.text;
             let typeName = fullText;
+        
             if (fullText.includes('-')) {
                 typeName = fullText.split('-')[0].trim();
             }
-            
+        
             const totalPrice = pricePerMeter * meters;
-            
+        
+            // إنشاء كود السجاد
+            const carpetCode = carpetCodeCounter;
+            carpetCodeCounter++;
+        
+            // حفظ العداد
+            localStorage.setItem("carpetCodeCounter", carpetCodeCounter);
+        
             selectedServices.carpet.push({
+                code: carpetCode,
                 name: `${typeName} - ${meters} متر`,
                 price: totalPrice,
                 meters: meters,
                 pricePerMeter: pricePerMeter
             });
-            
+        
+            alert(`كود السجادة: ${carpetCode}`);
+        
             customerPoints.carpet++;
             updatePointsDisplay();
             updateSelectedItems('carpet');
             calculateTotal();
+        
             metersInput.value = '';
         }
 
@@ -628,6 +644,7 @@ function autoCalculateNextKm() {
     const washNames = selectedServices.wash.map(i => i.name).join(" | ");
     const oilNames = selectedServices.oil.map(i => i.name).join(" | ");
     const carpetNames = selectedServices.carpet.map(i => i.name).join(" | ");
+    const carpetCodes = selectedServices.carpet.map(i => i.code).join(" | ");
 
     const invoiceData = {
         customer_name: customerName,
@@ -641,6 +658,7 @@ function autoCalculateNextKm() {
         wash_services: washNames,
         oil_services: oilNames,
         carpet_services: carpetNames,
+        carpet_code: carpetCodes,
         total: total
     };
 
