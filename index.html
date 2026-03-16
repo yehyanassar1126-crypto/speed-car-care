@@ -664,7 +664,7 @@ function autoCalculateNextKm() {
 
         if (result.success) {
             // Calculate total raw minutes (45 minutes per person)
-            const waitTimeMinutes = result.queueNumber * 45;
+            const waitTimeMinutes = result.queueNumber * 30;
             
             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
             
