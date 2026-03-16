@@ -623,7 +623,7 @@ function autoCalculateNextKm() {
         }
 
         // Save Invoice
-     async function saveInvoice() {
+    async function saveInvoice() {
     const carNumber = document.getElementById('carNumber').value;
     const customerName = document.getElementById('customerName').value;
     const customerPhone = document.getElementById('customerPhone').value;
@@ -636,6 +636,15 @@ function autoCalculateNextKm() {
 
     const oldKm = document.getElementById('oldKm').value;
     const newKm = document.getElementById('newKm').value;
+
+    // Assign carpet codes if not yet assigned
+    selectedServices.carpet.forEach(item => {
+        if (!item.code) {
+            item.code = carpetCodeCounter++;
+        }
+    });
+    // حفظ الكاونتر في localStorage
+    localStorage.setItem("carpetCodeCounter", carpetCodeCounter);
 
     const wt = selectedServices.wash.reduce((s, i) => s + i.price, 0);
     const ot = selectedServices.oil.reduce((s, i) => s + i.price, 0);
@@ -662,7 +671,7 @@ function autoCalculateNextKm() {
         total: total
     };
 
-  try {
+    try {
         const payload = {
             invoiceData: invoiceData,
             points: {
@@ -686,7 +695,6 @@ function autoCalculateNextKm() {
             
             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
             
-            // Append time only if there is a queue
             if (result.queueNumber > 0) {
                 const hours = Math.floor(waitTimeMinutes / 60);
                 const minutes = waitTimeMinutes % 60;
@@ -704,12 +712,26 @@ function autoCalculateNextKm() {
 
             alert(alertMessage);
             resetForm();
-        } else {
-            alert("حصل خطأ: " + result.error);
+
+            // إرسال الإيميل بشكل آمن
+            try {
+                await fetch('/api/sendInvoiceEmail', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ invoiceId: result.invoiceId })
+                });
+                console.log("📧 تم إرسال الإيميل بنجاح");
+            } catch (emailErr) {
+                console.warn("⚠️ فشل إرسال الإيميل لكن الفاتورة محفوظة:", emailErr);
+            }
         }
-    } catch (error) {
-        console.error(error);
+    } catch (err) {
+        console.error("❌ خطأ في حفظ الفاتورة:", err);
+        alert("حصل خطأ أثناء حفظ الفاتورة، حاول مرة أخرى");
     }
+
+    updatePointsDisplay();
+} 
     }
         function updateInvoicesTable() {
             const tbody = document.getElementById('invoicesTableBody');
