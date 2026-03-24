@@ -667,6 +667,9 @@ function autoCalculateNextKm() {
             const waitTimeMinutes = result.queueNumber * 30;
             
             let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
+            if (result.carpetCode) {
+            alertMessage += `\n🪑 كود السجاد: ${result.carpetCode}`;
+            }    
             
             // Append time only if there is a queue
             if (result.queueNumber > 0) {
