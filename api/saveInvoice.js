@@ -16,7 +16,7 @@ export default async function handler(req, res) {
         // ✅ Generate carpet code ONLY if carpet exists
         let carpetCode = null;
 
-        if (invoiceData.carpet_total > 0) {
+        if (Number(invoiceData.carpet_total) > 0) {
 
             // 🔥 هات آخر كود
             const { data: lastInvoice, error } = await supabase
