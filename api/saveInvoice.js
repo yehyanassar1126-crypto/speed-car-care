@@ -2,106 +2,123 @@ import { createClient } from '@supabase/supabase-js';
 const SibApiV3Sdk = require('@getbrevo/brevo');
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method !== 'POST') 
+        return res.status(405).json({ error: 'Method Not Allowed' });
 
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabase = createClient(
+        process.env.SUPABASE_URL, 
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
-try {
-    const { invoiceData, points } = req.body;
+    try {
+        const { invoiceData, points } = req.body;
 
-    // Generate carpet code if carpet service exists
-    let carpetCode = null;
+        // ✅ Generate carpet code ONLY if carpet exists
+        let carpetCode = null;
 
-    if (invoiceData.carpet_services && invoiceData.carpet_services !== "") {
+        if (invoiceData.carpet_total > 0) {
 
-        const { data } = await supabase
-            .from("invoices")
-            .select("carpet_code")
-            .not("carpet_code", "is", null) // تجاهل القيم الفاضية
-            .order("carpet_code", { ascending: false })
-            .limit(1);
+            // 🔥 هات آخر كود
+            const { data: lastInvoice, error } = await supabase
+                .from('invoices')
+                .select('carpet_code')
+                .not('carpet_code', 'is', null)
+                .order('carpet_code', { ascending: false })
+                .limit(1)
+                .maybeSingle(); // أفضل من single عشان مايضربش error
 
-        if (!data || data.length === 0) {
-            carpetCode = 100; // أول كود
-        } else {
-            carpetCode = data[0].carpet_code + 1;
+            if (error) throw error;
+
+            // 🔥 احسب الكود الجديد
+            let newCarpetCode = 100;
+
+            if (lastInvoice && lastInvoice.carpet_code) {
+                newCarpetCode = lastInvoice.carpet_code + 1;
+            }
+
+            carpetCode = newCarpetCode;
+            invoiceData.carpet_code = carpetCode;
         }
 
-        invoiceData.carpet_code = carpetCode;
-    }
-
-        // 1. Stage the data in the pending table
+        // 1. Save in pending
         const { data: pendingData, error: pendingError } = await supabase
             .from('pending_invoices')
-            .insert([{ invoice_data: invoiceData, points_data: points }])
+            .insert([{ 
+                invoice_data: invoiceData, 
+                points_data: points 
+            }])
             .select();
 
         if (pendingError) throw pendingError;
+
         const pendingId = pendingData[0].id;
 
-        // 2. Count the current queue (This was the missing logic!)
-        const { count, error: countError } = await supabase
+        // 2. Queue count
+        const { count } = await supabase
             .from('pending_invoices')
             .select('*', { count: 'exact', head: true });
-        
-        // Subtract 1 so it does not count the user's newly submitted invoice
+
         const queueNumber = count ? count - 1 : 0;
 
-        // 3. Construct dynamic action URLs
+        // 3. URLs
         const host = req.headers.host;
         const protocol = host.includes('localhost') ? 'http' : 'https';
+
         const approveUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=approve`;
         const rejectUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=reject`;
 
-        // 4. Configure Brevo email parameters
+        // 4. Email
         let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        let apiKey = apiInstance.authentications['apiKey'];
-        apiKey.apiKey = process.env.BREVO_API_KEY;
+        apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
 
         let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        sendSmtpEmail.sender = { "name": "Speed Car Care", "email": "nassaryehya26@gmail.com" }; 
-        sendSmtpEmail.to = [{ "email": "nassaryehya26@gmail.com" }]; 
+
+        sendSmtpEmail.sender = {
+            name: "Speed Car Care",
+            email: "nassaryehya26@gmail.com"
+        };
+
+        sendSmtpEmail.to = [
+            { email: "nassaryehya26@gmail.com" }
+        ];
+
         sendSmtpEmail.subject = `Invoice Approval Required: ${invoiceData.customer_name} - ${invoiceData.total} EGP`;
-        
+
         sendSmtpEmail.htmlContent = `
-            <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #1a1a2e;">مطلوب مراجعة فاتورة جديدة</h2>
-                <p><strong>العميل:</strong> ${invoiceData.customer_name || 'غير محدد'}</p>
-                <p><strong>رقم التليفون:</strong> ${invoiceData.mobile_number || 'غير محدد'}</p>
-                <p><strong>خدمات الغسيل:</strong> ${invoiceData.wash_services || 'لا يوجد'}</p>
-                <p><strong>خدمات الزيت:</strong> ${invoiceData.oil_services || 'لا يوجد'}</p>
-                <p><strong>خدمات السجاد:</strong> ${invoiceData.carpet_services || 'لا يوجد'}</p>
-                
-                
+            <div style="font-family: Arial; direction: rtl; text-align: right;">
+                <h2>مطلوب مراجعة فاتورة جديدة</h2>
+
+                <p><strong>العميل:</strong> ${invoiceData.customer_name}</p>
+                <p><strong>رقم التليفون:</strong> ${invoiceData.mobile_number}</p>
+
+                <p><strong>الغسيل:</strong> ${invoiceData.wash_services || 'لا يوجد'}</p>
+                <p><strong>الزيت:</strong> ${invoiceData.oil_services || 'لا يوجد'}</p>
+                <p><strong>السجاد:</strong> ${invoiceData.carpet_services || 'لا يوجد'}</p>
+
+                ${carpetCode ? `<p><strong>🪑 كود السجاد:</strong> ${carpetCode}</p>` : ''}
+
                 <p><strong>الإجمالي:</strong> ${invoiceData.total} ج.م</p>
-                
-                <hr style="border-top: 1px solid #ccc;">
+
                 <br>
-                <div style="text-align: center;">
-                    <a href="${approveUrl}" style="background-color: #28a745; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 10px;">✅ موافقة وحفظ</a>
-                    <a href="${rejectUrl}" style="background-color: #dc3545; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">❌ رفض ومسح</a>
-                </div>
-                <br>
-            </div>`;
+
+                <a href="${approveUrl}" style="background:green;color:#fff;padding:10px 15px;">موافقة</a>
+                <a href="${rejectUrl}" style="background:red;color:#fff;padding:10px 15px;">رفض</a>
+            </div>
+        `;
 
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        // 5. Return success WITH the calculated queue number
+        // 5. Response
         return res.status(200).json({
-        success: true,
-        queueNumber: queueNumber,
-        carpetCode: carpetCode
-    });
+            success: true,
+            queueNumber: queueNumber,
+            carpetCode: carpetCode
+        });
 
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
     }
 }
-
-
-
-
-
-
-
-
