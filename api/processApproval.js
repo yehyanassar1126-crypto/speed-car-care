@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
-    
+
     const { id, action } = req.query;
     if (!id || !action) return res.status(400).send('Missing ID or Action parameter.');
 
@@ -24,8 +24,15 @@ export default async function handler(req, res) {
             const { invoice_data: invoiceData, points_data: points } = pendingRecord;
 
             // Commit to permanent tables
-            await supabase.from('invoices').insert([invoiceData]);
-            await supabase.from('daily_invoices').insert([invoiceData]);
+            const { error: invError } = await supabase.from('invoices').insert([invoiceData]);
+            if (invError) {
+                console.error('invoices insert error:', invError);
+            }
+
+            const { error: dailyError } = await supabase.from('daily_invoices').insert([invoiceData]);
+            if (dailyError) {
+                console.error('daily_invoices insert error:', dailyError);
+            }
 
             // Update loyalty points
             const { data: existingCustomer } = await supabase
@@ -54,10 +61,10 @@ export default async function handler(req, res) {
         await supabase.from('pending_invoices').delete().eq('id', id);
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        const message = action === 'approve' 
+        const message = action === 'approve'
             ? '<h1 style="color:green; text-align:center; font-family: sans-serif; margin-top:50px;">✅ تم تأكيد وحفظ الفاتورة بنجاح</h1>'
             : '<h1 style="color:red; text-align:center; font-family: sans-serif; margin-top:50px;">❌ تم رفض ومسح الفاتورة</h1>';
-            
+
         return res.status(200).send(message);
 
     } catch (error) {
