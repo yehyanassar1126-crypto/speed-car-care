@@ -346,12 +346,6 @@
         let invoiceCounter = 1;
         let todayInvoices = [];
         let customerPoints = { wash: 0, oil: 0, carpet: 0 };
-        // إضافة طوابير مستقلة لكل خدمة
-        let queues = {
-            wash: [],   // طابور الغسيل
-            oil: [],    // طابور الزيت
-            carpet: []  // طابور السجاد
-        };
 
         // Add Service Functions
         function addWashService() {
@@ -668,53 +662,14 @@ function autoCalculateNextKm() {
 
         const result = await response.json();
 
-        let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\n\n`;
-
-            // طابور الغسيل
-            if (selectedServices.wash.length > 0) {
-                const queueLength = queues.wash.length;
-                const totalMinutes = queueLength * 30;
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = totalMinutes % 60;
-                let timeString = "";
-                if (hours > 0) timeString += `${hours} ساعة`;
-                if (hours > 0 && minutes > 0) timeString += ` و `;
-                if (minutes > 0) timeString += `${minutes} دقيقة`;
-                alertMessage += `🧼 غسيل: أمامك ${queueLength} عملاء\nالوقت المتوقع: ${timeString}\n\n`;
-            }
+        if (result.success) {
+            // Calculate total raw minutes (45 minutes per person)
+            const waitTimeMinutes = result.queueNumber * 30;
             
-            // طابور الزيت
-            if (selectedServices.oil.length > 0) {
-                const queueLength = queues.oil.length;
-                const totalMinutes = queueLength * 30;
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = totalMinutes % 60;
-                let timeString = "";
-                if (hours > 0) timeString += `${hours} ساعة`;
-                if (hours > 0 && minutes > 0) timeString += ` و `;
-                if (minutes > 0) timeString += `${minutes} دقيقة`;
-                alertMessage += `🛢️ زيت: أمامك ${queueLength} عملاء\nالوقت المتوقع: ${timeString}\n\n`;
-            }
-            
-            // طابور السجاد
-            if (selectedServices.carpet.length > 0) {
-                const queueLength = queues.carpet.length;
-                const totalMinutes = queueLength * 30;
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = totalMinutes % 60;
-                let timeString = "";
-                if (hours > 0) timeString += `${hours} ساعة`;
-                if (hours > 0 && minutes > 0) timeString += ` و `;
-                if (minutes > 0) timeString += `${minutes} دقيقة`;
-                alertMessage += `🪑 سجاد: أمامك ${queueLength} عملاء\nالوقت المتوقع: ${timeString}\n\n`;
-            
-                // لو فيه كود السجاد
-                if (result.carpetCode) {
-                    alertMessage += `كود السجاد: ${result.carpetCode}\n`;
-                }
-            }
-            
-            alert(alertMessage);
+            let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅\nأمامك في الطابور: ${result.queueNumber} عملاء`;
+            if (result.carpetCode) {
+            alertMessage += `\n🪑 كود السجاد: ${result.carpetCode}`;
+            }    
             
             // Append time only if there is a queue
             if (result.queueNumber > 0) {
@@ -942,4 +897,4 @@ async function submitFeedback() {
 });
     </script>
 </body>
-</html>
+</html>     عايز اخلي لكل حاجه طبور لوحدا لسجاد يقف ورا السجاد و الزيت ورا الزيت الغسيل ورا الغسيل
