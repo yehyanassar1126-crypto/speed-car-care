@@ -34,8 +34,8 @@ export default async function handler(req, res) {
 
             const pendingCustomerCode = existingPending
                 ? existingPending
-                    .filter(row => row.invoice_data 
-                        && row.invoice_data.mobile_number === customerPhone 
+                    .filter(row => row.invoice_data
+                        && row.invoice_data.mobile_number === customerPhone
                         && row.invoice_data.carpet_code)
                     .map(row => row.invoice_data.carpet_code)
                     .sort((a, b) => b - a)[0]
@@ -181,11 +181,11 @@ export default async function handler(req, res) {
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
         // 5. Return success WITH the calculated queue numbers and carpet code
-        return res.status(200).json({ 
-            success: true, 
+        return res.status(200).json({
+            success: true,
             washQueueNumber, oilQueueNumber, carpetQueueNumber,
             hasWash, hasOil, hasCarpet,
-            carpetCode 
+            carpetCode
         });
 
     } catch (error) {
