@@ -13,58 +13,108 @@ export default async function handler(req, res) {
         const hasOil = invoiceData.oil_total && invoiceData.oil_total > 0;
         const hasCarpet = invoiceData.carpet_total && invoiceData.carpet_total > 0;
 
-        // 1. Generate carpet code BEFORE inserting (so it's saved in invoice_data)
+        // ============================================================
+        // STEP 1: INSERT FIRST (so concurrent requests can see each other)
+        // ============================================================
+        const { data: pendingData, error: pendingError } = await supabase
+            .from('pending_invoices')
+            .insert([{ invoice_data: invoiceData, points_data: points }])
+            .select();
+
+        if (pendingError) throw pendingError;
+        const pendingId = pendingData[0].id;
+
+        // ============================================================
+        // STEP 2: NOW calculate everything (after insert, so data is accurate)
+        // ============================================================
+
+        // Fetch ALL pending invoices (including the one we just inserted)
+        const { data: allPending, error: pendingFetchError } = await supabase
+            .from('pending_invoices')
+            .select('id, invoice_data');
+
+        // --- Queue counts ---
+        let washQueueNumber = 0;
+        let oilQueueNumber = 0;
+        let carpetQueueNumber = 0;
+
+        if (!pendingFetchError && allPending) {
+            if (hasWash) {
+                washQueueNumber = allPending.filter(row =>
+                    row.invoice_data && row.invoice_data.wash_total > 0 && row.id < pendingId
+                ).length;
+            }
+            if (hasOil) {
+                oilQueueNumber = allPending.filter(row =>
+                    row.invoice_data && row.invoice_data.oil_total > 0 && row.id < pendingId
+                ).length;
+            }
+            if (hasCarpet) {
+                carpetQueueNumber = allPending.filter(row =>
+                    row.invoice_data && row.invoice_data.carpet_total > 0 && row.id < pendingId
+                ).length;
+            }
+        }
+
+        // --- Carpet code ---
         let carpetCode = null;
         if (hasCarpet) {
             const customerPhone = invoiceData.mobile_number;
 
-            // Check if this customer already has a carpet code in approved invoices
-            const { data: existingInvoices } = await supabase
-                .from('invoices')
-                .select('carpet_code')
-                .eq('mobile_number', customerPhone)
-                .not('carpet_code', 'is', null)
-                .order('carpet_code', { ascending: false })
-                .limit(1);
-
-            // Also check pending invoices for this customer
-            const { data: existingPending } = await supabase
-                .from('pending_invoices')
-                .select('invoice_data');
-
-            const pendingCustomerCode = existingPending
-                ? existingPending
+            // Check if this customer already has a carpet code in pending invoices
+            const pendingCustomerCode = allPending
+                ? allPending
                     .filter(row => row.invoice_data
                         && row.invoice_data.mobile_number === customerPhone
-                        && row.invoice_data.carpet_code)
+                        && row.invoice_data.carpet_code
+                        && row.id !== pendingId) // exclude current (it has no code yet)
                     .map(row => row.invoice_data.carpet_code)
                     .sort((a, b) => b - a)[0]
                 : null;
 
-            const existingCode = existingInvoices?.[0]?.carpet_code || pendingCustomerCode;
+            // Check approved invoices for this customer
+            let approvedCustomerCode = null;
+            const { data: customerInvoices, error: custErr } = await supabase
+                .from('invoices')
+                .select('*')
+                .eq('mobile_number', customerPhone);
+
+            if (!custErr && customerInvoices) {
+                const withCode = customerInvoices
+                    .filter(inv => inv.carpet_code)
+                    .map(inv => inv.carpet_code)
+                    .sort((a, b) => b - a)[0];
+                if (withCode) approvedCustomerCode = withCode;
+            }
+
+            const existingCode = approvedCustomerCode || pendingCustomerCode;
 
             if (existingCode) {
                 // Same customer → reuse their code
                 carpetCode = existingCode;
             } else {
-                // New customer → find max carpet code across all records and increment
+                // New customer → find max carpet code and increment
                 let maxCode = 99; // will start at 100
 
                 // Check max in approved invoices
-                const { data: maxInvoice } = await supabase
+                const { data: allInvoices, error: allErr } = await supabase
                     .from('invoices')
-                    .select('carpet_code')
-                    .not('carpet_code', 'is', null)
-                    .order('carpet_code', { ascending: false })
-                    .limit(1);
+                    .select('*')
+                    .gt('carpet_total', 0);
 
-                if (maxInvoice?.[0]?.carpet_code > maxCode) {
-                    maxCode = maxInvoice[0].carpet_code;
+                if (!allErr && allInvoices) {
+                    const maxApproved = allInvoices
+                        .filter(inv => inv.carpet_code)
+                        .map(inv => inv.carpet_code)
+                        .sort((a, b) => b - a)[0];
+                    if (maxApproved && maxApproved > maxCode) {
+                        maxCode = maxApproved;
+                    }
                 }
 
-                // Check max in pending invoices
-                if (existingPending) {
-                    const maxPending = existingPending
+                // Check max in ALL pending invoices (including other concurrent inserts)
+                if (allPending) {
+                    const maxPending = allPending
                         .filter(row => row.invoice_data && row.invoice_data.carpet_code)
                         .map(row => row.invoice_data.carpet_code)
                         .sort((a, b) => b - a)[0];
@@ -76,57 +126,24 @@ export default async function handler(req, res) {
                 carpetCode = maxCode + 1;
             }
 
-            // Store carpet code in invoiceData so it persists through approval
+            // ============================================================
+            // STEP 3: UPDATE the pending invoice with the carpet code
+            // ============================================================
             invoiceData.carpet_code = carpetCode;
+            await supabase
+                .from('pending_invoices')
+                .update({ invoice_data: invoiceData })
+                .eq('id', pendingId);
         }
 
-        // 2. Stage the data in the pending table (now includes carpet_code in invoice_data)
-        const { data: pendingData, error: pendingError } = await supabase
-            .from('pending_invoices')
-            .insert([{ invoice_data: invoiceData, points_data: points }])
-            .select();
-
-        if (pendingError) throw pendingError;
-        const pendingId = pendingData[0].id;
-
-        // 3. Fetch all pending invoices to calculate per-service queues
-        const { data: allPending, error: pendingFetchError } = await supabase
-            .from('pending_invoices')
-            .select('invoice_data');
-
-        let washQueueNumber = 0;
-        let oilQueueNumber = 0;
-        let carpetQueueNumber = 0;
-
-        if (!pendingFetchError && allPending) {
-            if (hasWash) {
-                washQueueNumber = allPending.filter(row =>
-                    row.invoice_data && row.invoice_data.wash_total > 0
-                ).length - 1;
-                if (washQueueNumber < 0) washQueueNumber = 0;
-            }
-            if (hasOil) {
-                oilQueueNumber = allPending.filter(row =>
-                    row.invoice_data && row.invoice_data.oil_total > 0
-                ).length - 1;
-                if (oilQueueNumber < 0) oilQueueNumber = 0;
-            }
-            if (hasCarpet) {
-                carpetQueueNumber = allPending.filter(row =>
-                    row.invoice_data && row.invoice_data.carpet_total > 0
-                ).length - 1;
-                if (carpetQueueNumber < 0) carpetQueueNumber = 0;
-            }
-        }
-
-
-        // 3. Construct dynamic action URLs
+        // ============================================================
+        // STEP 4: Send email with all details
+        // ============================================================
         const host = req.headers.host;
         const protocol = host.includes('localhost') ? 'http' : 'https';
         const approveUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=approve`;
         const rejectUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=reject`;
 
-        // 4. Configure Brevo email parameters
         let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
         let apiKey = apiInstance.authentications['apiKey'];
         apiKey.apiKey = process.env.BREVO_API_KEY;
@@ -148,7 +165,6 @@ export default async function handler(req, res) {
             servicesHtml += `<p><strong>السجاد:</strong> ${invoiceData.carpet_services} (${invoiceData.carpet_total} ج.م)</p>`;
         }
 
-        // Carpet code section
         let carpetCodeHtml = '';
         if (carpetCode) {
             carpetCodeHtml = `<p style="font-size: 16px;"><strong>🪑 كود السجاد:</strong> ${carpetCode}</p>`;
@@ -180,7 +196,9 @@ export default async function handler(req, res) {
 
         await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-        // 5. Return success WITH the calculated queue numbers and carpet code
+        // ============================================================
+        // STEP 5: Return success
+        // ============================================================
         return res.status(200).json({
             success: true,
             washQueueNumber, oilQueueNumber, carpetQueueNumber,
