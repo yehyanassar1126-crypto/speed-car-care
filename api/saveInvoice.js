@@ -61,70 +61,12 @@ export default async function handler(req, res) {
         if (hasCarpet) {
             const customerPhone = invoiceData.mobile_number;
 
-            // Check if this customer already has a carpet code in pending invoices
-            const pendingCustomerCode = allPending
-                ? allPending
-                    .filter(row => row.invoice_data
-                        && row.invoice_data.mobile_number === customerPhone
-                        && row.invoice_data.carpet_code
-                        && row.id !== pendingId) // exclude current (it has no code yet)
-                    .map(row => row.invoice_data.carpet_code)
-                    .sort((a, b) => b - a)[0]
-                : null;
+            // Get carpet code atomically from database (guaranteed unique!)
+            const { data: codeResult, error: codeErr } = await supabase
+                .rpc('assign_carpet_code', { p_phone: customerPhone });
 
-            // Check approved invoices for this customer
-            let approvedCustomerCode = null;
-            const { data: customerInvoices, error: custErr } = await supabase
-                .from('invoices')
-                .select('*')
-                .eq('mobile_number', customerPhone);
-
-            if (!custErr && customerInvoices) {
-                const withCode = customerInvoices
-                    .filter(inv => inv.carpet_code)
-                    .map(inv => inv.carpet_code)
-                    .sort((a, b) => b - a)[0];
-                if (withCode) approvedCustomerCode = withCode;
-            }
-
-            const existingCode = approvedCustomerCode || pendingCustomerCode;
-
-            if (existingCode) {
-                // Same customer → reuse their code
-                carpetCode = existingCode;
-            } else {
-                // New customer → find max carpet code and increment
-                let maxCode = 99; // will start at 100
-
-                // Check max in approved invoices
-                const { data: allInvoices, error: allErr } = await supabase
-                    .from('invoices')
-                    .select('*')
-                    .gt('carpet_total', 0);
-
-                if (!allErr && allInvoices) {
-                    const maxApproved = allInvoices
-                        .filter(inv => inv.carpet_code)
-                        .map(inv => inv.carpet_code)
-                        .sort((a, b) => b - a)[0];
-                    if (maxApproved && maxApproved > maxCode) {
-                        maxCode = maxApproved;
-                    }
-                }
-
-                // Check max in ALL pending invoices (including other concurrent inserts)
-                if (allPending) {
-                    const maxPending = allPending
-                        .filter(row => row.invoice_data && row.invoice_data.carpet_code)
-                        .map(row => row.invoice_data.carpet_code)
-                        .sort((a, b) => b - a)[0];
-                    if (maxPending && maxPending > maxCode) {
-                        maxCode = maxPending;
-                    }
-                }
-
-                carpetCode = maxCode + 1;
-            }
+            if (codeErr) throw codeErr;
+            carpetCode = codeResult;
 
             // ============================================================
             // STEP 3: UPDATE the pending invoice with the carpet code
