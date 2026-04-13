@@ -5,1210 +5,1295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Speed Car Care - نظام إدارة المغسلة</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
+        /* ========================================
+           DESIGN SYSTEM - SPEED CAR CARE
+        ======================================== */
         :root {
-            --primary-color: #1a1a2e;
-            --secondary-color: #16213e;
-            --accent-color: #e94560;
-            --text-light: #eaeaea;
+            /* Map Car Care original colors to the new variable names for structure compatibility */
+            --gold: #e94560; /* The highlight/accent color */
+            --gold-light: #ff6b81;
+            --gold-dark: #cc2f48;
+            --espresso: #1a1a2e; /* Primary Background */
+            --espresso-light: #16213e; /* Secondary Cards */
+            --espresso-mid: #1d2547;
+            --cream: #eaeaea; /* Light text */
+            --cream-dark: #b8b8b8;
+            --brick: #4ade80; /* Used for success/popular */
+            --brick-light: #6ee7b7;
+            --success: #4ade80;
+            --font-display: 'Cairo', sans-serif;
+            --font-body: 'Cairo', sans-serif;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(233, 69, 96, 0.2);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            font-family: var(--font-body);
+            background: var(--espresso);
+            color: var(--cream);
+            overflow-x: hidden;
             min-height: 100vh;
-            color: var(--text-light);
         }
 
-        /* ========== LOADING SCREEN ========== */
-        #loading-screen {
+        /* ========================================
+           SCROLLBAR
+        ======================================== */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--espresso); }
+        ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+        /* ========================================
+           NAVBAR
+        ======================================== */
+        .navbar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            right: 0;
+            z-index: 1000;
+            padding: 1.2rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s ease;
+            background: rgba(26, 26, 46, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: var(--gold);
+        }
+
+        .nav-brand-icon {
+            font-size: 2.2rem;
+            color: var(--gold);
+        }
+
+        .nav-brand h1 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .nav-brand span {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--cream-dark);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .points-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--cream);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .points-badge span { color: var(--gold); font-weight: bold; }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-cart-btn {
+            position: relative;
+            background: none;
+            border: 1.5px solid var(--gold);
+            color: var(--gold);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cart-btn:hover {
+            background: var(--gold);
+            color: var(--espresso);
+            transform: scale(1.1);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: var(--brick);
+            color: var(--espresso);
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+        }
+
+        .cart-badge.bump { animation: bump 0.3s ease; }
+
+        @keyframes bump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); }
+            100% { transform: scale(1); }
+        }
+
+        /* ========================================
+           LOADING SCREEN (Original Adapted)
+        ======================================== */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
             z-index: 99999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: radial-gradient(ellipse at center, #1b1464 0%, #0a0a2e 55%, #050518 100%);
-            overflow: hidden;
+            background: var(--espresso);
             transition: opacity 0.8s ease, visibility 0.8s ease;
         }
-
-        #loading-screen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        /* Animated background particles */
-        #loading-screen::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background:
-                radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.2), transparent),
-                radial-gradient(2px 2px at 60% 40%, rgba(255,255,255,0.3), transparent),
-                radial-gradient(2px 2px at 80% 10%, rgba(255,255,255,0.2), transparent),
-                radial-gradient(3px 3px at 10% 80%, rgba(100,149,237,0.3), transparent),
-                radial-gradient(3px 3px at 70% 60%, rgba(100,149,237,0.2), transparent),
-                radial-gradient(2px 2px at 50% 50%, rgba(255,255,255,0.15), transparent),
-                radial-gradient(2px 2px at 90% 90%, rgba(255,255,255,0.2), transparent);
-            animation: particleDrift 8s linear infinite;
-        }
-
-        @keyframes particleDrift {
-            0% { transform: translateY(0) rotate(0deg); }
-            100% { transform: translateY(-30px) rotate(3deg); }
-        }
-
-        /* Logo Container */
-        .loading-logo-wrap {
-            position: relative;
-            z-index: 2;
-            animation: logoEntry 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-            opacity: 0;
-            transform: scale(0.7) translateY(30px);
-        }
-
-        @keyframes logoEntry {
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .loading-logo-wrap img {
-            width: 320px;
-            max-width: 80vw;
-            filter: drop-shadow(0 0 30px rgba(100, 149, 237, 0.5)) drop-shadow(0 0 60px rgba(67, 56, 202, 0.3));
-            animation: logoPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes logoPulse {
-            0%, 100% { filter: drop-shadow(0 0 30px rgba(100, 149, 237, 0.5)) drop-shadow(0 0 60px rgba(67, 56, 202, 0.3)); }
-            50% { filter: drop-shadow(0 0 45px rgba(100, 149, 237, 0.7)) drop-shadow(0 0 80px rgba(67, 56, 202, 0.5)); }
-        }
-
-        /* Spinning ring around logo */
-        .loading-ring {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 360px;
-            height: 360px;
-            max-width: 85vw;
-            max-height: 85vw;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            border-top: 2px solid rgba(100, 149, 237, 0.6);
-            border-right: 2px solid rgba(233, 69, 96, 0.4);
-            transform: translate(-50%, -50%);
-            animation: ringSpin 3s linear infinite;
-        }
-
-        @keyframes ringSpin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        /* Phone numbers section */
-        .loading-phones {
-            position: relative;
-            z-index: 2;
-            margin-top: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            animation: phonesEntry 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        @keyframes phonesEntry {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
+        #loading-screen.fade-out { opacity: 0; visibility: hidden; }
+        .loading-logo-wrap { position: relative; z-index: 2; animation: logoEntry 1s forwards; opacity: 0; transform: scale(0.7) translateY(30px); text-align: center; }
+        @keyframes logoEntry { to { opacity: 1; transform: scale(1) translateY(0); } }
+        .loading-logo-wrap img { width: 280px; max-width: 80vw; filter: drop-shadow(0 0 30px rgba(233, 69, 96, 0.5)); margin-bottom: 2rem; }
+        
+        .loading-phones { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: center; margin-top: 1rem; }
         .loading-phones a {
+            color: var(--cream); text-decoration: none; font-size: 1.1rem; font-weight: 700;
+            display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.1);
+            padding: 10px 24px; border-radius: 50px; border: 1px solid var(--glass-border);
+            transition: all 0.3s;
+        }
+        .loading-phones a:hover { background: var(--gold); color: var(--espresso); border-color: var(--gold); transform: translateY(-3px); }
+
+        /* ========================================
+           SECTION LAYOUT
+        ======================================== */
+        .section {
+            padding: 8rem 2rem 5rem; /* Added top padding for fixed nav */
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header h2 em {
+            color: var(--gold);
+            font-style: normal;
+        }
+
+        .section-header p {
+            color: var(--cream-dark);
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        .section-divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+            margin: 1rem auto;
+            border-radius: 2px;
+        }
+
+        /* ========================================
+           CATEGORY TABS
+        ======================================== */
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .cat-tab {
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #fff;
-            text-decoration: none;
-            font-family: 'Cairo', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            padding: 8px 24px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
+            gap: 8px;
+            padding: 12px 28px;
+            border: 1.5px solid var(--glass-border);
+            background: var(--glass);
+            color: var(--cream-dark);
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
+            font-family: var(--font-body);
         }
 
-        .loading-phones a:hover {
-            background: rgba(233, 69, 96, 0.2);
-            border-color: rgba(233, 69, 96, 0.4);
-            transform: scale(1.05);
+        .cat-tab:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(233, 69, 96, 0.08); /* accent rgb */
         }
 
-        .loading-phones a i {
-            color: #4ade80;
+        .cat-tab.active {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--espresso);
+            border-color: var(--gold);
+            font-weight: 700;
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.25);
+        }
+
+        .cat-tab i {
             font-size: 1.1rem;
-            animation: phoneRing 1.5s ease-in-out infinite;
         }
 
-        @keyframes phoneRing {
-            0%, 100% { transform: rotate(0deg); }
-            15% { transform: rotate(15deg); }
-            30% { transform: rotate(-10deg); }
-            45% { transform: rotate(8deg); }
-            60% { transform: rotate(0deg); }
+        /* ========================================
+           MENU GRID
+        ======================================== */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
         }
 
-        /* Progress bar */
-        .loading-progress {
-            position: relative;
-            z-index: 2;
-            margin-top: 35px;
-            width: 200px;
-            max-width: 60vw;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+        .menu-card {
+            background: var(--espresso-light);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
             overflow: hidden;
-            animation: phonesEntry 1s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
-            opacity: 0;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
         }
 
-        .loading-progress-bar {
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(233, 69, 96, 0.4);
+        }
+
+        .menu-card-img {
+            height: 190px;
+            background: var(--espresso-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .menu-card-img img {
+            width: 100%;
             height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #e94560, #6366f1, #4ade80);
-            border-radius: 4px;
-            animation: progressFill 3s ease-in-out forwards;
+            object-fit: cover;
+            transition: transform 0.5s ease;
         }
 
-        @keyframes progressFill {
-            0% { width: 0%; }
-            30% { width: 40%; }
-            60% { width: 70%; }
-            90% { width: 92%; }
-            100% { width: 100%; }
+        .menu-card:hover .menu-card-img img {
+            transform: scale(1.08);
         }
 
-        /* Water droplets */
-        .water-drop {
+        .popular-tag {
             position: absolute;
-            width: 8px;
-            height: 12px;
-            background: linear-gradient(180deg, rgba(100, 149, 237, 0.7), rgba(100, 149, 237, 0.1));
-            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-            z-index: 1;
-            animation: dropFall linear infinite;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, var(--brick), var(--brick-light));
+            color: var(--espresso);
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            z-index: 2;
         }
 
-        @keyframes dropFall {
-            0% { transform: translateY(-20vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.8; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(110vh) rotate(45deg); opacity: 0; }
+        .menu-card-body {
+            padding: 1.3rem;
         }
 
-        /* ========== ORIGINAL STYLES ========== */
-        .navbar {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 1rem;
+        .menu-card-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--cream);
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            margin-bottom: 1rem;
-        }
-
-        .card-header {
-            background: rgba(233, 69, 96, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-weight: bold;
-        }
-
-        .form-control,
-        .form-select {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: rgb(0, 0, 0);
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: var(--accent-color);
-            color: rgb(0, 0, 0);
-        }
-
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .btn-primary {
-            background: var(--accent-color);
-            border: none;
-        }
-
-        .selected-item {
-            background: rgba(233, 69, 96, 0.3);
-            padding: 8px 12px;
-            margin: 5px 0;
-            border-radius: 8px;
+        .menu-card-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-top: 1rem;
         }
 
-        .points-badge {
-            background: linear-gradient(45deg, #ffd700, #ffaa00);
-            color: #000;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
+        .menu-card-price {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--gold);
         }
 
-        .total-display {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ffd700;
-            text-align: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
+        .menu-card-price small {
+            font-size: 0.8rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .add-to-cart-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--espresso);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-to-cart-btn:hover {
+            transform: scale(1.15) rotate(90deg);
+            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+        }
+
+        .add-to-cart-btn.added {
+            background: var(--success);
+            color: var(--espresso);
+        }
+
+        /* ========================================
+           CART SIDEBAR
+        ======================================== */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cart-overlay.open { opacity: 1; visibility: visible; }
+
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0; /* Changed to right for RTL */
+            width: 420px;
+            max-width: 90vw;
+            height: 100vh;
+            background: var(--espresso-light);
+            border-left: 1px solid var(--glass-border);
+            z-index: 2001;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-sidebar.open { transform: translateX(0); }
+
+        .cart-header {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .cart-header h3 { font-size: 1.4rem; color: var(--gold); }
+        .cart-close { background: none; border: none; color: var(--cream-dark); font-size: 1.3rem; cursor: pointer; transition: color 0.3s; }
+        .cart-close:hover { color: var(--gold); }
+
+        .cart-items { flex: 1; overflow-y: auto; padding: 1rem 1.5rem; }
+        .cart-empty { text-align: center; padding: 3rem 1rem; color: var(--cream-dark); opacity: 0.5; }
+        .cart-empty i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.8rem;
+        }
+
+        .cart-item-emoji {
+            font-size: 1.5rem;
+            width: 45px;
+            height: 45px;
+            background: var(--espresso-mid);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--gold);
+        }
+
+        .cart-item-info { flex: 1; min-width: 0; }
+        .cart-item-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+        .cart-item-price { font-size: 0.85rem; color: var(--gold); font-weight: bold; }
+
+        .cart-item-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .qty-btn {
+            width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--glass-border);
+            background: var(--glass); color: var(--cream); font-size: 0.9rem; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+        .qty-btn.remove:hover { border-color: var(--gold-dark); color: var(--gold-dark); }
+        .qty-value { font-weight: 700; font-size: 0.95rem; min-width: 20px; text-align: center; }
+
+        .cart-footer { padding: 1.5rem; border-top: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.2); }
+        .cart-total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .cart-total-label { font-size: 1.1rem; font-weight: bold; color: var(--cream); }
+        .cart-total-value { font-size: 1.8rem; font-weight: 900; color: var(--gold); }
+
+        .checkout-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--espresso); border: none; border-radius: var(--radius-md); font-size: 1.1rem;
+            font-weight: 800; cursor: pointer; transition: all 0.3s ease; font-family: var(--font-body);
+        }
+        .checkout-btn:hover { box-shadow: 0 10px 40px rgba(233, 69, 96, 0.3); transform: translateY(-2px); }
+        .checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* ========================================
+           ORDER MODAL
+        ======================================== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 3000;
+            display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden;
+            transition: all 0.3s ease; padding: 2rem;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: var(--espresso-light); border: 1px solid var(--glass-border); border-radius: var(--radius-lg);
+            width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto;
+            transform: scale(0.9) translateY(30px); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+        .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { color: var(--gold); font-size: 1.3rem; font-weight: bold; }
+        .modal-close { background: none; border: none; color: var(--cream-dark); font-size: 1.3rem; cursor: pointer; }
+
+        .modal-body { padding: 2rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.95rem; color: var(--cream-dark); margin-bottom: 8px; font-weight: 600; }
+        .form-input {
+            width: 100%; padding: 12px 16px; background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm); color: var(--cream); font-size: 1rem; font-family: var(--font-body);
+            transition: border-color 0.3s; outline: none;
+        }
+        .form-input:focus { border-color: var(--gold); }
+        .form-input[readonly] { opacity: 0.7; cursor: not-allowed; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .submit-order-btn {
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--espresso); border: none; border-radius: var(--radius-md); font-size: 1.1rem;
+            font-weight: 800; cursor: pointer; transition: all 0.3s; margin-top: 1rem;
+        }
+        .submit-order-btn:hover { box-shadow: 0 10px 40px rgba(233, 69, 96, 0.3); }
+
+        /* ========================================
+           FEEDBACK SECTION
+        ======================================== */
+        .feedback-section { background: var(--espresso-light); padding: 5rem 2rem; border-top: 1px solid var(--glass-border); }
+        .feedback-card { max-width: 700px; margin: 0 auto; background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 2.5rem; }
+        .form-select {
+            width: 100%; padding: 12px 16px; background: var(--glass); border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm); color: var(--cream); font-size: 1rem; font-family: var(--font-body);
+            outline: none; cursor: pointer;
+        }
+        .form-select option { background: var(--espresso-light); color: var(--cream); }
+        textarea.form-input { resize: vertical; min-height: 100px; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 1rem; }
+            .nav-center { display: none; }
+            .menu-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 
 <body>
-    <!-- ========== LOADING SCREEN ========== -->
+    <!-- LOADING SCREEN -->
     <div id="loading-screen">
-        <!-- Animated water drops -->
-        <div class="water-drop" style="left:10%; animation-duration:2.5s; animation-delay:0s;"></div>
-        <div class="water-drop" style="left:25%; animation-duration:3.2s; animation-delay:0.5s;"></div>
-        <div class="water-drop" style="left:40%; animation-duration:2.8s; animation-delay:1s;"></div>
-        <div class="water-drop" style="left:55%; animation-duration:3.5s; animation-delay:0.3s;"></div>
-        <div class="water-drop" style="left:70%; animation-duration:2.6s; animation-delay:0.8s;"></div>
-        <div class="water-drop" style="left:85%; animation-duration:3s; animation-delay:1.2s;"></div>
-        <div class="water-drop" style="left:15%; animation-duration:3.3s; animation-delay:0.7s;"></div>
-        <div class="water-drop" style="left:60%; animation-duration:2.9s; animation-delay:0.2s;"></div>
-        <div class="water-drop" style="left:90%; animation-duration:3.1s; animation-delay:1.5s;"></div>
-        <div class="water-drop" style="left:5%; animation-duration:2.7s; animation-delay:1.1s;"></div>
-
-        <!-- Logo -->
         <div class="loading-logo-wrap">
-            <div class="loading-ring"></div>
-            <img src="logo.png" alt="Speed Clean & Lube Experts">
-        </div>
-
-        <!-- Phone Numbers -->
-        <div class="loading-phones">
-            <a href="tel:01111232340">
-                <i class="fas fa-phone-alt"></i>
-                01111232340
-            </a>
-            <a href="tel:01024608351">
-                <i class="fas fa-phone-alt"></i>
-                01024608351
-            </a>
-        </div>
-
-        <!-- Progress Bar -->
-        <div class="loading-progress">
-            <div class="loading-progress-bar"></div>
+            <img src="logo.png" alt="Speed Car Care Logo">
+            <div style="width: 100px; height: 3px; background: var(--gold); margin: 0 auto; animation: bump 1.5s infinite"></div>
+            
+            <div class="loading-phones">
+                <a href="tel:01111232340"><i class="fas fa-phone-alt"></i> 01111232340</a>
+                <a href="tel:01024608351"><i class="fas fa-phone-alt"></i> 01024608351</a>
+            </div>
         </div>
     </div>
-
-    <script>
-        // Hide loading screen after animations complete
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('loading-screen').classList.add('fade-out');
-                // Remove from DOM after fade
-                setTimeout(function() {
-                    document.getElementById('loading-screen').style.display = 'none';
-                }, 800);
-            }, 3500);
-        });
-    </script>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-car-wash"></i> Speed Car Care
-            </a>
-            <div class="d-flex gap-3">
-                <span class="points-badge">
-                    <i class="fas fa-tint"></i> نقاط الغسيل: <span id="washPoints">0</span>
-                </span>
-                <span class="points-badge">
-                    <i class="fas fa-oil-can"></i> نقاط الزيت: <span id="oilPoints">0</span>
-                </span>
-                <span class="points-badge">
-                    <i class="fas fa-chair"></i> نقاط السجاد: <span id="carpetPoints">0</span>
-                </span>
+    
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-brand">
+            <i class="fas fa-car-wash nav-brand-icon"></i>
+            <div>
+                <h1>Speed Car Care</h1>
+                <span>نظام إدارة المغسلة</span>
             </div>
+        </a>
+        <div class="nav-center d-flex gap-3">
+            <span class="points-badge">
+                <i class="fas fa-shower"></i> غسيل <span id="washPoints">0</span>
+            </span>
+            <span class="points-badge">
+                <i class="fas fa-oil-can"></i> زيت <span id="oilPoints">0</span>
+            </span>
+            <span class="points-badge">
+                <i class="fas fa-chair"></i> سجاد <span id="carpetPoints">0</span>
+            </span>
+        </div>
+        <div class="nav-actions">
+            <button class="nav-cart-btn" onclick="toggleCart()">
+                <i class="fas fa-file-invoice"></i>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </button>
         </div>
     </nav>
 
-    <div class="container-fluid p-4">
-        <!-- Customer Section -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-user"></i> بيانات العميل
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-12 mb-2">
-                                <input type="text" class="form-control" id="customerName" placeholder="اسم العميل"
-                                    required>
-                            </div>
-                            <div class="col-md-12 mb-2">
-                                <input type="tel" class="form-control" id="customerPhone" placeholder="رقم التليفون">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Car Info -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-car"></i> بيانات السيارة
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <input type="text" class="form-control" id="carNumber" placeholder="رقم العربية">
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <input type="number" class="form-control" id="oldKm" placeholder="العداد القديم">
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <input type="number" class="form-control" id="newKm" placeholder="العداد الجديد">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <!-- SERVICES SECTION -->
+    <section class="section" id="menu">
+        <div class="section-header">
+            <h2>الخدمات <em>المتاحة</em></h2>
+            <div class="section-divider"></div>
+            <p>اختر من خدماتنا المتميزة والمقدمة بأعلى جودة</p>
         </div>
 
-        <!-- Services -->
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <ul class="nav nav-tabs" id="serviceTabs" role="tablist">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#wash">
-                            <i class="fas fa-shower"></i> الغسيل
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#oil">
-                            <i class="fas fa-oil-can"></i> الزيت
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#carpet">
-                            <i class="fas fa-chair"></i> السجاد
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content p-3">
-                    <!-- Wash -->
-                    <div class="tab-pane show active" id="wash">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>اختر الخدمة</h5>
-                                <select class="form-select mb-2" id="washSelect">
-                                    <option value="">-- اختر خدمة غسيل --</option>
-                                    <option value="50">1. غسيل خارجي عادي - 50 ج.م</option>
-                                    <option value="50">2. غسيل داخلي - 50 ج.م</option>
-                                    <option value="100">3. غسيل كامل - 100 ج.م</option>
-                                    <option value="150">4. غسيل دفع رباعي / فان - 150 ج.م</option>
-                                    <option value="50">7. تلميع الشمع (Wax) - 50 ج.م</option>
-                                    <option value="50">9. تلميع الإطارات - 50 ج.م</option>
-                                    <option value="400">12. تنظيف الفرش - 400 ج.م</option>
-                                    <option value="300">13. تنظيف السقف - 300 ج.م</option>
-                                    <option value="100">15. إزالة الروائح - 100 ج.م</option>
-                                    <option value="100">16. إزالة البقع - 100 ج.م</option>
-                                    <option value="50">17. تغيير زيت المحرك - 50 ج.م</option>
-                                    <option value="20">18. تغيير فلتر - 20 ج.م</option>
-                                    <option value="50">19. تشحيم الأبواب - 50 ج.م</option>
-                                    <option value="50">20. غسيل موتور - 50 ج.م</option>
-                                </select>
-                                <button class="btn btn-primary" onclick="addWashService()">
-                                    <i class="fas fa-plus"></i> إضافة
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>الخدمات المختارة</h5>
-                                <div id="selectedWash"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Oil -->
-                    <div class="tab-pane" id="oil">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>اختر منتج</h5>
-                                <select class="form-select mb-2" id="oilSelect">
-                                    <option value="oilSelect">-- اختر زيت أو منتج --</option>
-                                </select>
-                                <button class="btn btn-primary" onclick="addOilService()">
-                                    <i class="fas fa-plus"></i> إضافة
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>المحدد</h5>
-                                <div id="selectedOil"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Carpet -->
-                    <div class="tab-pane" id="carpet">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>غسيل السجاد</h5>
-                                <select class="form-select mb-2" id="carpetTypeSelect">
-                                    <option value="25">21. غسيل سجاد عادي - 25 ج.م/متر</option>
-                                    <option value="70">22. غسيل سجاد يدوي - 70 ج.م/متر</option>
-                                    <option value="70">23. غسيل سجاد حرير - 70 ج.م/متر</option>
-                                    <option value="70">24. غسيل سجاد فرو - 70 ج.م/متر</option>
-                                </select>
-                                <input type="number" class="form-control mb-2" id="carpetMeters"
-                                    placeholder="عدد الأمتار">
-                                <button class="btn btn-primary" onclick="addCarpetService()">
-                                    <i class="fas fa-plus"></i> إضافة
-                                </button>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>السجاد المحدد</h5>
-                                <div id="selectedCarpet"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Category Tabs -->
+        <div class="category-tabs" id="categoryTabs">
+            <button class="cat-tab active" onclick="filterCategory('all', this)">
+                <i class="fas fa-th"></i> <span>الكل</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('wash', this)">
+                <i class="fas fa-shower"></i> <span>غسيل</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('oil', this)">
+                <i class="fas fa-oil-can"></i> <span>زيت</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('carpet', this)">
+                <i class="fas fa-chair"></i> <span>سجاد</span>
+            </button>
         </div>
 
-        <!-- Invoice Summary -->
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-calculator"></i> ملخص الفاتورة
+        <!-- Menu Grid -->
+        <div class="menu-grid" id="menuGrid">
+            <!-- Rendered dynamically -->
+        </div>
+    </section>
+
+    <!-- FEEDBACK SECTION -->
+    <section class="feedback-section" id="feedback">
+        <div class="section-header">
+            <h2>آراء و مقترحات <em>العملاء</em></h2>
+            <div class="section-divider"></div>
+            <p>نسعد بسماع تقييمك لمساعدتنا في تقديم تجربة أفضل</p>
+        </div>
+
+        <div class="feedback-card">
+            <form id="feedbackForm">
+                <div class="form-row" style="margin-bottom: 1.2rem;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>الاسم الكريم</label>
+                        <input type="text" class="form-input" id="feedbackName" placeholder="الاسم">
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-3 text-center">
-                                <h6>غسيل</h6>
-                                <h4 id="washTotal">0.00</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <h6>زيت</h6>
-                                <h4 id="oilTotal">0.00</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <h6>سجاد</h6>
-                                <h4 id="carpetTotal">0.00</h4>
-                            </div>
-                            <div class="col-md-3 text-center">
-                                <h6>الإجمالي</h6>
-                                <div class="total-display" id="grandTotal">0.00</div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>رقم التليفون</label>
+                        <input type="tel" class="form-input" id="feedbackPhone" placeholder="01xxxxxxxxx">
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-bottom: 1.2rem;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>مستوى الخدمة</label>
+                        <select class="form-select" id="feedbackRating" required>
+                            <option value="">-- كيف تقيم تجربتك؟ --</option>
+                            <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
+                            <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+                            <option value="3">⭐⭐⭐ جيد</option>
+                            <option value="2">⭐⭐ مقبول</option>
+                            <option value="1">⭐ ضعيف</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>نوع الرسالة</label>
+                        <select class="form-select" id="feedbackType" required>
+                            <option value="">-- اختر نوع الرسالة --</option>
+                            <option value="compliment">شكر وإشادة</option>
+                            <option value="suggestion">اقتراح تطوير</option>
+                            <option value="complaint">شكوى</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظاتك</label>
+                    <textarea class="form-input" id="feedbackMessage" placeholder="اكتب ملاحظاتك أو مقترحاتك هنا..." required></textarea>
+                </div>
+
+                <div style="text-align: center;">
+                    <button type="button" class="submit-order-btn" style="width: auto; padding: 12px 40px;" onclick="submitFeedback()">
+                        <i class="fas fa-paper-plane"></i> إرسال التقييم
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- CART SIDEBAR -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3><i class="fas fa-file-invoice"></i> الفاتورة</h3>
+            <button class="cart-close" onclick="toggleCart()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <i class="fas fa-shopping-basket"></i>
+                <p>لم يتم اختيار خدمات</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total-row">
+                <span class="cart-total-label">الإجمالي</span>
+                <span class="cart-total-value" id="cartTotal">0 ج.م</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn" onclick="openOrderModal()" disabled>
+                <i class="fas fa-check-circle"></i> المتابعة وإنشاء الفاتورة
+            </button>
+        </div>
+    </div>
+
+    <!-- ORDER / INVOICE MODAL -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-car"></i> بيانات العميل والسيارة</h3>
+                <button class="modal-close" onclick="closeOrderModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>اسم العميل *</label>
+                        <input type="text" class="form-input" id="orderName" placeholder="الاسم الكريم" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف *</label>
+                        <input type="tel" class="form-input" id="orderPhone" placeholder="01xxxxxxxxx" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>رقم السيارة *</label>
+                    <input type="text" class="form-input" id="carNumber" placeholder="أ د ج - 1234">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>العداد القديم (كم)</label>
+                        <input type="number" class="form-input" id="oldKm" placeholder="مثال: 154000">
+                    </div>
+                    <div class="form-group">
+                        <label>العداد الجديد (كم) للمتابعة</label>
+                        <input type="number" class="form-input" id="newKm" placeholder="يحسب تلقائياً للزيت" readonly>
+                    </div>
+                </div>
+
+                <!-- Order Summary in Modal -->
+                <div style="background: rgba(255,255,255,0.05); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: var(--cream-dark); font-weight:bold;">قيمة الفاتورة المطلوبة</span>
+                        <span style="font-size: 1.6rem; font-weight: 900; color: var(--gold);" id="modalTotal">0 ج.م</span>
+                    </div>
+                </div>
+
+                <button class="submit-order-btn" id="submitOrderBtn" onclick="saveInvoice()">
+                    <i class="fas fa-save"></i> حفظ الفاتورة وإرسالها
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ============================================================
+        // STATE
+        // ============================================================
+        let menuItems = [];
+        let cart = [];
+        let currentCategory = 'all';
+        let customerPoints = { wash: 0, oil: 0, carpet: 0 };
+
+        const categoryIcons = {
+            wash: 'fa-shower',
+            oil: 'fa-oil-can',
+            carpet: 'fa-chair'
+        };
+
+        // Initial loading screen removal
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loading-screen').classList.add('fade-out');
+                setTimeout(function() { document.getElementById('loading-screen').style.display = 'none'; }, 800);
+            }, 3500); 
+        });
+
+        // ============================================================
+        // MENU DATA & INITIALIZATION
+        // ============================================================
+        function getStaticMenuItems() {
+            return [
+                { id: 'wash_1', name: 'غسيل خارجي عادي', price: 50, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: true },
+                { id: 'wash_2', name: 'غسيل داخلي', price: 50, category: 'wash', image_url: 'images/0de56a61-58a6-4123-a4dc-e1b1bbbcb45b.jpg', is_popular: false },
+                { id: 'wash_3', name: 'غسيل كامل', price: 100, category: 'wash', image_url: 'images/1025f73b-e233-4e3e-84b7-9b53a15a2474.jpg', is_popular: true },
+                { id: 'wash_4', name: 'غسيل دفع رباعي / فان', price: 150, category: 'wash', image_url: 'images/1e1dbef1-8352-4bcc-ae85-693188b5e56b.jpg', is_popular: false },
+                { id: 'wash_7', name: 'تلميع الشمع (Wax)', price: 50, category: 'wash', image_url: 'images/3f71927f-8308-4b7b-9684-f1731745ee2f.jpg', is_popular: false },
+                { id: 'wash_9', name: 'تلميع الإطارات', price: 50, category: 'wash', image_url: 'images/4369e181-7821-4422-ac4e-8e39d873dd1d.jpg', is_popular: false },
+                { id: 'wash_12', name: 'تنظيف الفرش', price: 400, category: 'wash', image_url: 'images/4762dc84-223c-4e36-96dd-92f2121f2b29.jpg', is_popular: true },
+                { id: 'wash_13', name: 'تنظيف السقف', price: 300, category: 'wash', image_url: 'images/559ee5ae-1696-4f69-9f31-3d58da33d5d9.jpg', is_popular: false },
+                { id: 'wash_15', name: 'إزالة الروائح', price: 100, category: 'wash', image_url: 'images/9e5fd6e8-999a-4788-a579-22a319f4a88a.jpg', is_popular: false },
+                { id: 'wash_16', name: 'إزالة البقع', price: 100, category: 'wash', image_url: 'images/ccb39612-72ef-47cf-83a8-a2906a9dbae8.jpg', is_popular: false },
+                { id: 'wash_19', name: 'تشحيم الأبواب', price: 50, category: 'wash', image_url: 'images/eee7a9da-21cf-4c2a-93dd-2fee8ee2a9f3.jpg', is_popular: false },
+                { id: 'wash_20', name: 'غسيل موتور', price: 50, category: 'wash', image_url: 'images/f4cb70ff-a583-411d-b9ff-7a813876f146.jpg', is_popular: false },
+
+                // Carpet 
+                { id: 'carpet_21', name: 'غسيل سجاد عادي', price: 25, category: 'carpet', image_url: 'images/new_carpet.jpg', unit: '/ متر', is_popular: true },
+                { id: 'carpet_22', name: 'غسيل سجاد يدوي', price: 70, category: 'carpet', image_url: 'images/new_carpet.jpg', unit: '/ متر', is_popular: false },
+                { id: 'carpet_23', name: 'غسيل سجاد حرير', price: 70, category: 'carpet', image_url: 'images/new_carpet.jpg', unit: '/ متر', is_popular: false },
+                { id: 'carpet_24', name: 'غسيل سجاد فرو', price: 70, category: 'carpet', image_url: 'images/new_carpet.jpg', unit: '/ متر', is_popular: false },
+            ];
+        }
+
+        async function loadMenu() {
+            let tempMenuItems = getStaticMenuItems();
+            
+            try {
+                const response = await fetch('/api/getProducts');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    const dbOils = result.data.map(p => ({
+                        id: 'oil_' + p.id,
+                        stock_id: p.id,
+                        name: p.name,
+                        price: parseFloat(p.price) || 0,
+                        category: 'oil',
+                        image_url: 'images/oils.jpg',
+                        stock: Number(p.stock) || 0,
+                        max_kilometers: Number(p.max_kilometers) || 0,
+                        is_popular: false
+                    }));
+                    tempMenuItems = tempMenuItems.concat(dbOils);
+                }
+            } catch(e) { 
+                console.error('Failed to fetch oil products from backend. Using static fallback for demo if needed.', e); 
+            }
+
+            menuItems = tempMenuItems;
+            renderMenu(menuItems);
+        }
+
+        function filterCategory(category, btnElement) {
+            currentCategory = category;
+            
+            document.querySelectorAll('.cat-tab').forEach(btn => btn.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+
+            const filtered = category === 'all' ? menuItems : menuItems.filter(i => i.category === category);
+            renderMenu(filtered);
+        }
+
+        function renderMenu(items) {
+            const grid = document.getElementById('menuGrid');
+            
+            if (!items || items.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 2rem;">لا توجد خدمات متاحة.</div>`;
+                return;
+            }
+
+            grid.innerHTML = items.map(item => {
+                const icon = categoryIcons[item.category];
+                const unit = item.unit ? ` <span style="font-size:0.65rem;">${item.unit}</span>` : '';
+                const stockWarning = item.category === 'oil' && item.stock <= 1 && item.stock > 0 ? `<div style="color:var(--gold); font-size:0.8rem; margin-bottom:5px;">⚠️ فاضل جركن واحد</div>` : '';
+                const noStock = item.category === 'oil' && item.stock <= 0 ? `<div style="color:red; font-size:0.8rem; margin-bottom:5px;">❌ خلصان من المخزن</div>` : '';
+                const isOutOfStock = item.category === 'oil' && item.stock <= 0;
+                
+                const inCartItem = cart.find(c => c.id === item.id);
+                const isAdded = inCartItem !== undefined;
+
+                return `
+                    <div class="menu-card" id="card-${item.id}" ${isOutOfStock ? 'style="opacity: 0.6;"' : ''}>
+                        <div class="menu-card-img">
+                            ${item.is_popular ? `<div class="popular-tag">⭐ الأكثر طلباً</div>` : ''}
+                            <img src="${item.image_url}" alt="${item.name}">
+                        </div>
+                        <div class="menu-card-body">
+                            <div class="menu-card-name">${item.name}</div>
+                            ${stockWarning}
+                            ${noStock}
+                            <div class="menu-card-footer">
+                                <div class="menu-card-price">${item.price} <small>ج.م${unit}</small></div>
+                                <button class="add-to-cart-btn ${isAdded ? 'added' : ''}" 
+                                        onclick="addToCart('${item.id}')"
+                                        id="btn-${item.id}"
+                                        ${isOutOfStock ? 'disabled' : ''}>
+                                    <i class="fas ${isAdded ? 'fa-check' : 'fa-plus'}"></i>
+                                </button>
                             </div>
                         </div>
-                        <div class="text-center mt-3">
-                            <button class="btn btn-primary btn-lg" onclick="saveInvoice()">
-                                <i class="fas fa-save"></i> حفظ الفاتورة
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================
+        // CART & INVOICE MANAGEMENT
+        // ============================================================
+        async function addToCart(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+
+            if(item.category === 'oil' && item.stock <= 0) {
+                alert("❌ المنتج خلصان من المخزن");
+                return;
+            }
+
+            const existingItem = cart.find(c => c.id === itemId);
+
+            if (existingItem) {
+                existingItem.quantity++;
+                if (item.category === 'oil') {
+                    item.stock--;
+                    updateBackendStock(item.stock_id, item.stock);
+                }
+            } else {
+                cart.push({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    category: item.category,
+                    quantity: 1,
+                    max_kilometers: item.max_kilometers || 0
+                });
+                
+                if (item.category === 'oil') {
+                    item.stock--;
+                    updateBackendStock(item.stock_id, item.stock);
+                }
+            }
+
+            // Points calc
+            customerPoints[item.category]++;
+            updatePointsDisplay();
+
+            // Auto KM calc
+            if(item.category === 'oil') autoCalculateNextKm();
+
+            // Button feedback
+            const btn = document.getElementById(`btn-${itemId}`);
+            if (btn) {
+                btn.classList.add('added');
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    btn.classList.remove('added');
+                    btn.innerHTML = '<i class="fas fa-plus"></i>';
+                }, 1200);
+            }
+
+            updateCart();
+        }
+
+        function updateCartQuantity(itemId, delta) {
+            const cartItemIndex = cart.findIndex(c => c.id === itemId);
+            if (cartItemIndex === -1) return;
+
+            const cartItem = cart[cartItemIndex];
+            const originalItem = menuItems.find(i => i.id === itemId);
+
+            if (delta > 0 && originalItem?.category === 'oil' && originalItem.stock <= 0) {
+                alert("❌ لا يوجد مخزون كافي");
+                return;
+            }
+
+            cartItem.quantity += delta;
+            
+            if(delta > 0) {
+                customerPoints[cartItem.category]++;
+                if (originalItem?.category === 'oil') {
+                    originalItem.stock--;
+                    updateBackendStock(originalItem.stock_id, originalItem.stock);
+                }
+            } else {
+                customerPoints[cartItem.category]--;
+                if (originalItem?.category === 'oil') {
+                    originalItem.stock++;
+                    updateBackendStock(originalItem.stock_id, originalItem.stock);
+                }
+            }
+
+            if (cartItem.quantity <= 0) {
+                cart.splice(cartItemIndex, 1);
+            }
+
+            updatePointsDisplay();
+            if(cartItem.category === 'oil') autoCalculateNextKm();
+            updateCart();
+        }
+
+        async function updateBackendStock(stockId, newStock) {
+            try {
+                await fetch('/api/updateStock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: stockId, newStock: newStock })
+                });
+            } catch (err) {
+                console.error("خطأ في تحديث المخزون");
+            }
+        }
+
+        function updatePointsDisplay() {
+            document.getElementById('washPoints').textContent = customerPoints.wash;
+            document.getElementById('oilPoints').textContent = customerPoints.oil;
+            document.getElementById('carpetPoints').textContent = customerPoints.carpet;
+        }
+
+        function updateCart() {
+            const cartItemsEl = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const cartBadge = document.getElementById('cartBadge');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            cartBadge.textContent = totalItems;
+            cartBadge.classList.add('bump');
+            setTimeout(() => cartBadge.classList.remove('bump'), 300);
+
+            cartTotal.textContent = `${totalPrice.toFixed(2)} ج.م`;
+            checkoutBtn.disabled = cart.length === 0;
+
+            if (cart.length === 0) {
+                cartItemsEl.innerHTML = `<div class="cart-empty"><i class="fas fa-file-invoice"></i><p>الفاتورة فارغة</p></div>`;
+                return;
+            }
+
+            cartItemsEl.innerHTML = cart.map(item => {
+                const iconClass = categoryIcons[item.category] || 'fa-tag';
+                const qtySuffix = item.category === 'carpet' ? ' متر' : '';
+                return `
+                    <div class="cart-item">
+                        <div class="cart-item-emoji"><i class="fas ${iconClass}"></i></div>
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">${(item.price * item.quantity).toFixed(2)} ج.م</div>
+                        </div>
+                        <div class="cart-item-controls">
+                            <button class="qty-btn remove" onclick="updateCartQuantity('${item.id}', -1)">
+                                <i class="fas ${item.quantity === 1 ? 'fa-trash-alt' : 'fa-minus'}"></i>
                             </button>
-                            <!-- <button class="btn btn-success btn-lg" onclick="printInvoice()">
-                                <i class="fas fa-print"></i> طباعة PDF
-                            </button> -->
+                            <span class="qty-value">${item.quantity}${qtySuffix}</span>
+                            <button class="qty-btn" onclick="updateCartQuantity('${item.id}', 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-        <!-- Customer Feedback -->
-        <div class="row mt-4 mb-5">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-comments fs-5 me-2" style="margin-left: 8px;"></i>
-                        <span>آراء ومقترحات العملاء (Customer Feedback)</span>
-                    </div>
-                    <div class="card-body">
-                        <form id="feedbackForm">
-                            <div class="row">
-                                <!-- Rating -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" style="color: rgba(255,255,255,0.8);">مستوى الخدمة
-                                        (Service Rating)</label>
-                                    <select class="form-select" id="feedbackRating" required>
-                                        <option value="">-- كيف تقيم تجربتك؟ --</option>
-                                        <option value="5">⭐⭐⭐⭐⭐ ممتاز (Excellent)</option>
-                                        <option value="4">⭐⭐⭐⭐ جيد جداً (Very Good)</option>
-                                        <option value="3">⭐⭐⭐ جيد (Good)</option>
-                                        <option value="2">⭐⭐ مقبول (Fair)</option>
-                                        <option value="1">⭐ ضعيف (Poor)</option>
-                                    </select>
-                                </div>
+                `;
+            }).join('');
+        }
 
-                                <!-- Feedback Type -->
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label" style="color: rgba(255,255,255,0.8);">نوع الرسالة
-                                        (Feedback Type)</label>
-                                    <select class="form-select" id="feedbackType" required>
-                                        <option value="">-- اختر نوع الرسالة --</option>
-                                        <option value="compliment">شكر وإشادة (Compliment)</option>
-                                        <option value="suggestion">اقتراح تطوير (Suggestion)</option>
-                                        <option value="complaint">شكوى (Complaint)</option>
-                                    </select>
-                                </div>
+        function toggleCart() {
+            document.getElementById('cartOverlay').classList.toggle('open');
+            document.getElementById('cartSidebar').classList.toggle('open');
+        }
 
-                                <!-- Message Textarea -->
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label" style="color: rgba(255,255,255,0.8);">ملاحظاتك (Your
-                                        Comments)</label>
-                                    <textarea class="form-control" id="feedbackMessage" rows="3"
-                                        placeholder="اكتب ملاحظاتك أو مقترحاتك هنا..." required></textarea>
-                                </div>
-                            </div>
+        function openOrderModal() {
+            toggleCart();
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            document.getElementById('modalTotal').textContent = `${totalPrice.toFixed(2)} ج.م`;
+            document.getElementById('orderModal').classList.add('open');
+        }
 
-                            <!-- Submit Button -->
-                            <div class="text-center mt-2">
-                                <button type="button" class="btn btn-primary px-5 py-2" onclick="submitFeedback()">
-                                    <i class="fas fa-paper-plane"></i> إرسال التقييم
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.remove('open');
+        }
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            let selectedServices = { wash: [], oil: [], carpet: [], extra: [] };
-            let oilProducts = [];
-            let currentInvoiceId = null;
-            let invoiceCounter = 1;
-            let todayInvoices = [];
-            let customerPoints = { wash: 0, oil: 0, carpet: 0 };
+        /* Auto KM */
+        function autoCalculateNextKm() {
+            const oldKmInput = document.getElementById('oldKm');
+            const newKmInput = document.getElementById('newKm');
+            const oldKm = parseInt(oldKmInput.value);
 
-            // Add Service Functions
-            function addWashService() {
-                const select = document.getElementById('washSelect');
-                const selectedOption = select.options[select.selectedIndex];
-
-                if (!selectedOption.value) {
-                    alert('اختر خدمة أولاً');
-                    return;
-                }
-
-                // Get the full text and extract service name properly
-                const fullText = selectedOption.text;
-                const price = parseFloat(selectedOption.value);
-
-                // Extract service name - get everything before the " - price" part
-                let name = fullText;
-                if (fullText.includes('-')) {
-                    name = fullText.split('-')[0].trim();
-                }
-
-                selectedServices.wash.push({ name, price });
-                customerPoints.wash++;
-                updatePointsDisplay();
-                updateSelectedItems('wash');
-                calculateTotal();
-                select.value = '';
+            const oilItems = cart.filter(c => c.category === 'oil');
+            
+            if (!oldKm || oilItems.length === 0) {
+                newKmInput.value = '';
+                return;
             }
 
+            // Take max_kilometers from the last added oil that has the property
+            const lastOil = oilItems[oilItems.length - 1];
+            if (!lastOil || !lastOil.max_kilometers) return;
 
-            // دالة إضافة الزيت الآمنة
-            async function addOilService() {
-                const select = document.getElementById('oilSelect');
-                const selectedOption = select.options[select.selectedIndex];
+            const nextKm = oldKm + parseInt(lastOil.max_kilometers);
+            newKmInput.value = nextKm;
+        }
 
-                if (!selectedOption.value || selectedOption.value === "oilSelect") {
-                    alert('اختر منتج أولاً');
-                    return;
+        document.getElementById('oldKm').addEventListener('input', autoCalculateNextKm);
+
+        /* Save Invoice Logic to backend */
+        async function saveInvoice() {
+            const customerName = document.getElementById('orderName').value.trim();
+            const customerPhone = document.getElementById('orderPhone').value.trim();
+            const carNumber = document.getElementById('carNumber').value.trim();
+            const oldKm = document.getElementById('oldKm').value.trim();
+            const newKm = document.getElementById('newKm').value.trim();
+
+            if (!customerName || !customerPhone) {
+                alert('⚠️ يرجى إدخال اسم العميل ورقم الهاتف');
+                return;
+            }
+
+            if (cart.length === 0) {
+                alert('⚠️ لا توجد خدمات في الفاتورة');
+                return;
+            }
+
+            const btn = document.getElementById('submitOrderBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...`;
+
+            // Sort logic into categories
+            const washItems = cart.filter(i => i.category === 'wash');
+            const oilItems = cart.filter(i => i.category === 'oil');
+            const carpetItems = cart.filter(i => i.category === 'carpet');
+
+            const wt = washItems.reduce((s, c) => s + (c.price * c.quantity), 0);
+            const ot = oilItems.reduce((s, c) => s + (c.price * c.quantity), 0);
+            const ct = carpetItems.reduce((s, c) => s + (c.price * c.quantity), 0);
+            const total = wt + ot + ct;
+
+            const washNames = washItems.map(i => `${i.name} (x${i.quantity})`).join(" | ");
+            const oilNames = oilItems.map(i => `${i.name} (x${i.quantity})`).join(" | ");
+            const carpetNames = carpetItems.map(i => `${i.name} (${i.quantity} متر)`).join(" | ");
+
+            const invoiceData = {
+                customer_name: customerName,
+                mobile_number: customerPhone,
+                car_number: carNumber,
+                current_km: oldKm,
+                next_km: newKm, // Calculated Next Km
+                wash_total: wt,
+                oil_total: ot,
+                carpet_total: ct,
+                wash_services: washNames,
+                oil_services: oilNames,
+                carpet_services: carpetNames,
+                total: total
+            };
+
+            const payload = {
+                invoiceData: invoiceData,
+                points: {
+                    wash: washItems.length,
+                    oil: oilItems.length,
+                    carpet: carpetItems.length
                 }
+            };
 
-                const productId = selectedOption.dataset.id;
-                const product = oilProducts.find(p => p.id == productId);
-
-                if (product.stock <= 0) {
-                    alert("❌ المنتج خلصان");
-                    return;
-                }
-
-                if (product.stock === 1) {
-                    alert("⚠️ فاضل جركن واحد بس");
-                }
-
-                // خصم الجركن محلياً
-                // Get the maxKm from the HTML element
-                const maxKm = selectedOption.dataset.km;
-
-                // خصم الجركن محلياً
-                product.stock--;
-
-                // Update the UI immediately (Now including maxKm)
-                selectedServices.oil.push({
-                    name: product.name,
-                    price: parseFloat(product.price),
-                    id: product.id,
-                    maxKm: maxKm
+            try {
+                const response = await fetch('/api/saveInvoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
+                const result = await response.json();
 
-                customerPoints.oil++;
-                updatePointsDisplay();
-                updateSelectedItems('oil');
-                autoCalculateNextKm(); // Triggers the calculation
-                calculateTotal();
-                // This is now globally available!
+                if (result.success) {
+                    let alertMessage = `تم حفظ الفاتورة بنجاح ✅`;
 
-                // إرسال التحديث للسيرفر المخفي
-                try {
-                    await fetch('/api/updateStock', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: product.id, newStock: product.stock })
-                    });
-                    await loadOilProducts();
-                } catch (err) {
-                    console.error("خطأ في تحديث المخزون");
-                }
-
-                select.value = 'oilSelect';
-            }
-
-            // دالة مسح الخدمة (لإرجاع المخزون إذا ألغى العميل الزيت)
-            async function removeService(category, index) {
-                const item = selectedServices[category][index];
-                selectedServices[category].splice(index, 1);
-
-                if (category === 'wash') customerPoints.wash--;
-
-                if (category === 'oil') {
-                    // البحث عن المنتج لإرجاع المخزون
-                    const product = oilProducts.find(p => p.id == item.id || p.name === item.name);
-                    if (product) {
-                        product.stock++;
-                        try {
-                            // إبلاغ السيرفر بإرجاع المخزون
-                            await fetch('/api/updateStock', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: product.id, newStock: product.stock })
-                            });
-                        } catch (err) {
-                            console.error("خطأ في استرجاع المخزون");
-                        }
+                    if (washItems.length > 0) {
+                        const wQueue = result.washQueueNumber || 0;
+                        alertMessage += `\n🚿 أمامك في الغسيل: ${wQueue} عملاء`;
                     }
-                    customerPoints.oil--;
-                }
-
-                if (category === 'carpet') customerPoints.carpet--;
-
-                updatePointsDisplay();
-                updateSelectedItems(category);
-                calculateTotal();
-
-                if (category === 'oil') {
-                    await loadOilProducts();
-                }
-            }
-            function autoCalculateNextKm() {
-                const oldKmInput = document.getElementById('oldKm');
-                const newKmInput = document.getElementById('newKm');
-
-                const oldKm = parseInt(oldKmInput.value);
-
-                if (!oldKm || selectedServices.oil.length === 0) {
-                    return;
-                }
-
-                // Get the last added oil
-                const lastOil = selectedServices.oil[selectedServices.oil.length - 1];
-
-                if (!lastOil || !lastOil.maxKm || lastOil.maxKm === "0") return;
-
-                // Calculate and set the new KM
-                const nextKm = oldKm + parseInt(lastOil.maxKm);
-                newKmInput.value = nextKm;
-            }
-            function addCarpetService() {
-                const typeSelect = document.getElementById('carpetTypeSelect');
-                const metersInput = document.getElementById('carpetMeters');
-                const selectedOption = typeSelect.options[typeSelect.selectedIndex];
-
-                const pricePerMeter = parseFloat(selectedOption.value);
-                const meters = parseInt(metersInput.value);
-
-                if (!meters || meters <= 0) {
-                    alert('أدخل عدد الأمتار');
-                    return;
-                }
-
-                const fullText = selectedOption.text;
-                let typeName = fullText;
-                if (fullText.includes('-')) {
-                    typeName = fullText.split('-')[0].trim();
-                }
-
-                const totalPrice = pricePerMeter * meters;
-
-                selectedServices.carpet.push({
-                    name: `${typeName} - ${meters} متر`,
-                    price: totalPrice,
-                    meters: meters,
-                    pricePerMeter: pricePerMeter
-                });
-
-                customerPoints.carpet++;
-                updatePointsDisplay();
-                updateSelectedItems('carpet');
-                calculateTotal();
-                metersInput.value = '';
-            }
-
-            function addExtraService() {
-                const select = document.getElementById('extraSelect');
-                const selectedOption = select.options[select.selectedIndex];
-
-                if (!selectedOption.value) {
-                    alert('اختر خدمة أولاً');
-                    return;
-                }
-
-                const fullText = selectedOption.text;
-                const price = parseFloat(selectedOption.value);
-
-                let name = fullText;
-                if (fullText.includes('-')) {
-                    name = fullText.split('-')[0].trim();
-                }
-
-                selectedServices.extra.push({ name, price });
-                updateSelectedItems('extra');
-                calculateTotal();
-                select.value = '';
-            }
-
-            function updatePointsDisplay() {
-                document.getElementById('washPoints').textContent = customerPoints.wash;
-                document.getElementById('oilPoints').textContent = customerPoints.oil;
-                document.getElementById('carpetPoints').textContent = customerPoints.carpet;
-            }
-
-            function updateSelectedItems(category) {
-                const container = document.getElementById('selected' + category.charAt(0).toUpperCase() + category.slice(1));
-                container.innerHTML = '';
-                selectedServices[category].forEach((item, index) => {
-                    container.innerHTML += `
-                    <div class="selected-item">
-                        <span>${item.name}</span>
-                        <span>${item.price.toFixed(2)} ج.م</span>
-                        <i class="fas fa-times text-danger" style="cursor:pointer" onclick="removeService('${category}', ${index})"></i>
-                    </div>`;
-                });
-            }
-
-            async function removeService(category, index) {
-                const item = selectedServices[category][index];
-                selectedServices[category].splice(index, 1);
-
-                if (category === 'wash') customerPoints.wash--;
-
-                if (category === 'oil') {
-                    const product = oilProducts.find(p => p.name === item.name);
-                    if (product) {
-                        product.stock++;
-                        await supabaseClient
-                            .from('oil_products')
-                            .update({ stock: product.stock })
-                            .eq('id', product.id);
+                    if (oilItems.length > 0) {
+                        const oQueue = result.oilQueueNumber || 0;
+                        alertMessage += `\n🛢️ أمامك في الزيت: ${oQueue} عملاء`;
                     }
-                    customerPoints.oil--;
-                }
-
-                if (category === 'carpet') customerPoints.carpet--;
-
-                updatePointsDisplay();
-                updateSelectedItems(category);
-                calculateTotal();
-            }
-
-            function calculateTotal() {
-                let wt = selectedServices.wash.reduce((s, i) => s + i.price, 0);
-                let ot = selectedServices.oil.reduce((s, i) => s + i.price, 0);
-                let ct = selectedServices.carpet.reduce((s, i) => s + i.price, 0);
-                let et = selectedServices.extra.reduce((s, i) => s + i.price, 0);
-
-                document.getElementById('washTotal').textContent = wt.toFixed(2);
-                document.getElementById('oilTotal').textContent = (ot + et).toFixed(2);
-                document.getElementById('carpetTotal').textContent = ct.toFixed(2);
-                document.getElementById('grandTotal').textContent = (wt + ot + ct + et).toFixed(2);
-
-                return wt + ot + ct + et;
-            }
-
-            // Save Invoice
-            async function saveInvoice() {
-                const carNumber = document.getElementById('carNumber').value;
-                const customerName = document.getElementById('customerName').value;
-                const customerPhone = document.getElementById('customerPhone').value;
-
-                if (!customerName) return alert('أدخل اسم العميل');
-                if (!customerPhone) return alert('أدخل رقم التليفون');
-
-                const total = calculateTotal();
-                if (total === 0) return alert('اختر خدمات على الأقل');
-
-                const oldKm = document.getElementById('oldKm').value;
-                const newKm = document.getElementById('newKm').value;
-
-                const wt = selectedServices.wash.reduce((s, i) => s + i.price, 0);
-                const ot = selectedServices.oil.reduce((s, i) => s + i.price, 0);
-                const ct = selectedServices.carpet.reduce((s, i) => s + i.price, 0);
-
-                const washNames = selectedServices.wash.map(i => i.name).join(" | ");
-                const oilNames = selectedServices.oil.map(i => i.name).join(" | ");
-                const carpetNames = selectedServices.carpet.map(i => i.name).join(" | ");
-
-                const invoiceData = {
-                    customer_name: customerName,
-                    mobile_number: customerPhone,
-                    car_number: carNumber,
-                    current_km: oldKm,
-                    next_km: newKm,
-                    wash_total: wt,
-                    oil_total: ot,
-                    carpet_total: ct,
-                    wash_services: washNames,
-                    oil_services: oilNames,
-                    carpet_services: carpetNames,
-                    total: total
-                };
-
-                try {
-                    const payload = {
-                        invoiceData: invoiceData,
-                        points: {
-                            wash: selectedServices.wash.length,
-                            oil: selectedServices.oil.length,
-                            carpet: selectedServices.carpet.length
-                        }
-                    };
-
-                    const response = await fetch('/api/saveInvoice', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-
-                        let alertMessage = `تم إرسال الفاتورة للموافقة بنجاح ✅`;
-
-                        // Wash queue message (30 min per person)
-                        if (selectedServices.wash.length > 0) {
-                            const washQueue = result.washQueueNumber || 0;
-                            alertMessage += `\n\n🚿 طابور الغسيل:`;
-                            alertMessage += `\nأمامك في الطابور: ${washQueue} عملاء`;
-                            if (washQueue > 0) {
-                                const washMinutes = washQueue * 30;
-                                const hours = Math.floor(washMinutes / 60);
-                                const mins = washMinutes % 60;
-                                let timeStr = "";
-                                if (hours > 0) {
-                                    timeStr += `${hours} ساعة`;
-                                    if (mins > 0) timeStr += ` و ${mins} دقيقة`;
-                                } else {
-                                    timeStr = `${mins} دقيقة`;
-                                }
-                                alertMessage += `\nالوقت المتوقع: حوالي ${timeStr}`;
-                            }
-                        }
-
-                        // Oil queue message (30 min per person)
-                        if (selectedServices.oil.length > 0) {
-                            const oilQueue = result.oilQueueNumber || 0;
-                            alertMessage += `\n\n🛢️ طابور الزيت:`;
-                            alertMessage += `\nأمامك في الطابور: ${oilQueue} عملاء`;
-                            if (oilQueue > 0) {
-                                const oilMinutes = oilQueue * 30;
-                                const hours = Math.floor(oilMinutes / 60);
-                                const mins = oilMinutes % 60;
-                                let timeStr = "";
-                                if (hours > 0) {
-                                    timeStr += `${hours} ساعة`;
-                                    if (mins > 0) timeStr += ` و ${mins} دقيقة`;
-                                } else {
-                                    timeStr = `${mins} دقيقة`;
-                                }
-                                alertMessage += `\nالوقت المتوقع: حوالي ${timeStr}`;
-                            }
-                        }
-
-                        // Carpet queue message (2 days per person)
-                        if (selectedServices.carpet.length > 0) {
-                            const carpetQueue = result.carpetQueueNumber || 0;
-                            alertMessage += `\n\n🪑 طابور السجاد:`;
-                            if (carpetQueue > 0) {
-                                const carpetWaitDays = carpetQueue * 2;
-                                alertMessage += `\nأمامك ${carpetQueue} طلب سجاد`;
-                                alertMessage += `\nالمدة المتوقعة: ${carpetWaitDays} يوم`;
-                            } else {
-                                alertMessage += `\nأنت أول طلب سجاد! 🎉`;
-                                alertMessage += `\nالمدة المتوقعة: يومين`;
-                            }
-                            if (result.carpetCode) {
-                                alertMessage += `\n🪑 كود السجاد: ${result.carpetCode}`;
-                            }
-                        }
-
-                        alert(alertMessage);
-                        resetForm();
-                    } else {
-                        alert("حصل خطأ: " + result.error);
-                    }
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-            function updateInvoicesTable() {
-                const tbody = document.getElementById('invoicesTableBody');
-                if (todayInvoices.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">لا توجد فواتير اليوم</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = '';
-                todayInvoices.forEach(inv => {
-                    tbody.innerHTML += `<tr>
-                    <td>${inv.id}</td>
-                    <td>${inv.customerName}</td>
-                    <td>${inv.carNumber}</td>
-                    <td>${inv.date}</td>
-                    <td>${inv.total.toFixed(2)}</td>
-                    <td><button class="btn btn-sm btn-primary" onclick="printInvoicePDF(${inv.id})"><i class="fas fa-print"></i></button></td>
-                </tr>`;
-                });
-            }
-
-            function printInvoice() {
-                if (!currentInvoiceId) return alert('احفظ الفاتورة أولاً');
-                printInvoicePDF(currentInvoiceId);
-            }
-
-            function printInvoicePDF(invoiceId) {
-                const invoice = todayInvoices.find(i => i.id === invoiceId);
-                if (!invoice) return alert('الفاتورة غير موجودة');
-
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                doc.setFontSize(20);
-                doc.text('Speed Car Care', 105, 20, { align: 'center' });
-                doc.setFontSize(12);
-                doc.text('نظام إدارة المغسلة والخدمة الذاتية', 105, 28, { align: 'center' });
-
-                doc.setFontSize(10);
-                doc.text(`رقم الفاتورة: ${invoice.id}`, 20, 40);
-                doc.text(`التاريخ: ${invoice.date}`, 20, 46);
-                doc.text(`العميل: ${invoice.customerName}`, 20, 54);
-                doc.text(`التليفون: ${invoice.customerPhone}`, 20, 60);
-                doc.text(`العربية: ${invoice.carNumber}`, 20, 66);
-                if (invoice.oldKm) doc.text(`عداد قديم: ${invoice.oldKm}`, 120, 54);
-                if (invoice.newKm) doc.text(`عداد جديد: ${invoice.newKm}`, 120, 60);
-
-                const tableData = invoice.items.map(i => [i.name, i.price.toFixed(2) + ' ج.م']);
-                doc.autoTable({ startY: 75, head: [['الخدمة/المنتج', 'السعر']], body: tableData, theme: 'grid', headStyles: { fillColor: [233, 69, 96] } });
-
-                const finalY = doc.lastAutoTable.finalY + 10;
-                doc.setFontSize(12);
-                doc.text(`غسيل: ${invoice.washTotal.toFixed(2)} ج.م`, 20, finalY);
-                doc.text(`زيت: ${invoice.oilTotal.toFixed(2)} ج.م`, 20, finalY + 6);
-                doc.text(`سجاد: ${invoice.carpetTotal.toFixed(2)} ج.م`, 20, finalY + 12);
-
-                doc.setFontSize(14);
-                doc.setTextColor(233, 69, 96);
-                doc.text(`الإجمالي: ${invoice.total.toFixed(2)} ج.م`, 20, finalY + 22);
-
-                //doc.save(`invoice_${invoice.id}.pdf`);
-            }
-
-            function resetForm() {
-                selectedServices = { wash: [], oil: [], carpet: [], extra: [] };
-                customerPoints = { wash: 0, oil: 0, carpet: 0 };
-                document.getElementById('carNumber').value = '';
-                document.getElementById('oldKm').value = '';
-                document.getElementById('newKm').value = '';
-                document.getElementById('customerName').value = '';
-                document.getElementById('customerPhone').value = '';
-                updatePointsDisplay();
-                ['Wash', 'Oil', 'Carpet', 'Extra'].forEach(cat => {
-                    document.getElementById('selected' + cat).innerHTML = '';
-                });
-                calculateTotal();
-                function autoCalculateNextKm() {
-                    const oldKmInput = document.getElementById('oldKm');
-                    const newKmInput = document.getElementById('newKm');
-
-                    const oldKm = parseInt(oldKmInput.value);
-
-                    if (!oldKm || selectedServices.oil.length === 0) {
-                        return;
+                    if (carpetItems.length > 0) {
+                        const cQueue = result.carpetQueueNumber || 0;
+                        alertMessage += `\n🪑 أمامك ${cQueue} طلبات سجاد. المتوقع: ${cQueue * 2 || 2} يوم`;
+                        if (result.carpetCode) alertMessage += `\nكود السجاد: ${result.carpetCode}`;
                     }
 
-                    // ناخد آخر زيت مضاف
-                    const lastOil = selectedServices.oil[selectedServices.oil.length - 1];
-
-                    if (!lastOil.maxKm) return;
-
-                    const nextKm = oldKm + parseInt(lastOil.maxKm);
-
-                    newKmInput.value = nextKm;
+                    alert(alertMessage);
+                    resetAll();
+                    closeOrderModal();
+                } else {
+                    alert("❌ حصل خطأ: " + result.error);
                 }
-
-                // Call the function here to refresh the list when the form resets
-                loadOilProducts();
+            } catch (error) {
+                console.error("Save invoice error:", error);
+                alert("❌ تعذر الاتصال بالسيرفر. يرجى المحاولة لاحقاً.");
             }
 
-            // Define loadOilProducts globally (OUTSIDE of resetForm)
-            // دالة جلب الزيوت الآمنة
-            async function loadOilProducts() {
-                try {
-                    const response = await fetch('/api/getProducts');
-                    const result = await response.json();
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-save"></i> حفظ الفاتورة وإرسالها`;
+        }
 
-                    if (!result.success) {
-                        console.error("Error loading oils:", result.error);
-                        return;
-                    }
-
-                    oilProducts = result.data;
-                    const select = document.getElementById("oilSelect");
-                    select.innerHTML = '<option value="">-- اختر زيت أو منتج --</option>';
-
-                    oilProducts.forEach(p => {
-                        // Notice the data-km attribute added here!
-                        select.innerHTML += `
-                <option value="${p.price}" data-id="${p.id}" data-km="${p.max_kilometers || 0}">
-                    ${p.name} - ${p.price} ج.م  
-                    (المخزون: ${p.stock})  
-                    - تغيير بعد ${p.max_kilometers || 0} كم
-                </option>`;
-                    });
-                } catch (error) {
-                    console.error("Server not connected", error);
-                }
-            }
-        </script>
-        <script>
-            window.addEventListener("DOMContentLoaded", async () => {
-                document.getElementById('oldKm').addEventListener('input', autoCalculateNextKm);
-                await loadOilProducts();
+        function resetAll() {
+            cart = [];
+            customerPoints = { wash: 0, oil: 0, carpet: 0 };
+            updatePointsDisplay();
+            updateCart();
+            document.getElementById('orderName').value = '';
+            document.getElementById('orderPhone').value = '';
+            document.getElementById('carNumber').value = '';
+            document.getElementById('oldKm').value = '';
+            document.getElementById('newKm').value = '';
+            
+            // Un-check visually added items
+            document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+                btn.classList.remove('added');
+                btn.innerHTML = '<i class="fas fa-plus"></i>';
             });
-            // Function to send feedback to Supabase
-            async function submitFeedback() {
-                const rating = document.getElementById('feedbackRating').value;
-                const type = document.getElementById('feedbackType').value;
-                const message = document.getElementById('feedbackMessage').value;
+            
+            loadMenu(); // refresh strictly for database sync (such as new stock qty) if necessary
+        }
 
-                // Get customer info from the top fields
-                const customerName = document.getElementById('customerName').value || "Unknown";
-                const customerPhone = document.getElementById('customerPhone').value || "No Phone";
+        // ============================================================
+        // CUSTOMER LOOKUP
+        // ============================================================
+        document.getElementById('orderPhone').addEventListener('blur', async function () {
+            const phone = this.value.trim();
+            if (!phone) return;
 
-                // Check if the required fields are filled
-                if (!rating || !type || !message) {
-                    alert("Please fill in the rating, type, and message before submitting.");
-                    return;
+            try {
+                const response = await fetch('/api/getCustomer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const result = await response.json();
+
+                if (result.found) {
+                    document.getElementById('orderName').value = result.customer_name;
+                    document.getElementById('carNumber').value = result.car_number;
+                    
+                    customerPoints.wash += (result.points.wash_points || 0);
+                    customerPoints.oil += (result.points.oil_points || 0);
+                    customerPoints.carpet += (result.points.carpet_points || 0);
+                    updatePointsDisplay();
+
+                    alert(`بيانات مسجلة مسبقاً 👋\nنقاط الغسيل: ${customerPoints.wash} | نقاط الزيت: ${customerPoints.oil}`);
                 }
-
-                try {
-                    // Send the data to your Vercel server API
-                    const response = await fetch('/api/sendFeedback', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ rating, type, message, customerName, customerPhone })
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        alert("Feedback saved successfully to database! ✅");
-                        document.getElementById('feedbackForm').reset();
-                    } else {
-                        alert("Error saving feedback: " + result.error);
-                    }
-                } catch (error) {
-                    alert("Could not connect to the server. Please try again later.");
-                    console.error(error);
-                }
+            } catch (error) {
+                console.error("Lookup failed", error);
             }
-            document.getElementById('customerPhone').addEventListener('blur', async function () {
-                const phone = this.value;
-                if (!phone) return;
+        });
 
-                try {
-                    const response = await fetch('/api/getCustomer', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ phone })
-                    });
-                    const result = await response.json();
+        // ============================================================
+        // FEEDBACK
+        // ============================================================
+        async function submitFeedback() {
+            const rating = document.getElementById('feedbackRating').value;
+            const type = document.getElementById('feedbackType').value;
+            const message = document.getElementById('feedbackMessage').value;
+            const customerName = document.getElementById('feedbackName').value || "Unknown";
+            const customerPhone = document.getElementById('feedbackPhone').value || "No Phone";
 
-                    if (result.found) {
-                        document.getElementById('customerName').value = result.customer_name;
-                        document.getElementById('carNumber').value = result.car_number;
+            if (!rating || !type || !message) {
+                alert("⚠️ يرجى استكمال بيانات التقييم والملاحظات!");
+                return;
+            }
 
-                        // Populate the global points object with the retrieved data
-                        customerPoints.wash = result.points.wash_points || 0;
-                        customerPoints.oil = result.points.oil_points || 0;
-                        customerPoints.carpet = result.points.carpet_points || 0;
-                        updatePointsDisplay();
-
-                        alert(`بيانات العميل مسجلة مسبقاً.\nنقاط الغسيل: ${customerPoints.wash} | نقاط الزيت: ${customerPoints.oil} | نقاط السجاد: ${customerPoints.carpet}`);
-                    }
-                } catch (error) {
-                    console.error("Lookup failed", error);
+            try {
+                const response = await fetch('/api/sendFeedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating, type, message, customerName, customerPhone })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert("✅ تم إرسال التقييم بنجاح، شكراً للمشاركة!");
+                    document.getElementById('feedbackForm').reset();
+                } else {
+                    alert("❌ خطأ: " + result.error);
                 }
-            });
-        </script>
+            } catch (error) {
+                alert("تعذر الاتصال بالخادم.");
+                console.error(error);
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', loadMenu);
+
+    </script>
 </body>
-
-</html> 
+</html>
