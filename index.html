@@ -429,10 +429,12 @@
         .cart-sidebar {
             position: fixed;
             top: 0;
+            bottom: 0;
             right: 0; /* Changed to right for RTL */
             width: 420px;
             max-width: 90vw;
-            height: 100vh;
+            height: 100%;
+            height: 100dvh;
             background: var(--espresso-light);
             border-left: 1px solid var(--glass-border);
             z-index: 2001;
@@ -806,21 +808,18 @@
         // ============================================================
         function getStaticMenuItems() {
             return [
-                { id: 'wash_1', name: 'غسيل خارجي عادي', price: 60, category: 'wash', image_url: 'images/0de56a61-58a6-4123-a4dc-e1b1bbbcb45b.jpg', is_popular: true },
-                { id: 'wash_2', name: 'غسيل داخلي', price: 60, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: false },
-                { id: 'wash_3', name: 'غسيل كامل', price: 120, category: 'wash', image_url: 'images/f4cb70ff-a583-411d-b9ff-7a813876f146.jpg', is_popular: true },
-                { id: 'wash_4', name: 'غسيل فان', price: 150, category: 'wash', image_url: 'images/3f71927f-8308-4b7b-9684-f1731745ee2f.jpg', is_popular: false },
-                { id: 'wash_5', name: 'غسيل دفع رباعي', price: 170, category: 'wash', image_url: 'images/3f71927f-8308-4b7b-9684-f1731745ee2f.jpg', is_popular: false },
-                { id: 'wash_12', name: 'تنظيف الفرش', price: 400, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: true },
-                { id: 'wash_9', name: 'تلميع الإطارات', price: 50, category: 'wash', image_url: 'images/4762dc84-223c-4e36-96dd-92f2121f2b29.jpg', is_popular: false },
+                { id: 'wash_1', name: 'غسيل خارجي عادي', price: 50, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: true },
+                { id: 'wash_2', name: 'غسيل داخلي', price: 50, category: 'wash', image_url: 'images/0de56a61-58a6-4123-a4dc-e1b1bbbcb45b.jpg', is_popular: false },
+                { id: 'wash_3', name: 'غسيل كامل', price: 100, category: 'wash', image_url: 'images/1025f73b-e233-4e3e-84b7-9b53a15a2474.jpg', is_popular: true },
+                { id: 'wash_4', name: 'غسيل دفع رباعي / فان', price: 150, category: 'wash', image_url: 'images/1e1dbef1-8352-4bcc-ae85-693188b5e56b.jpg', is_popular: false },
                 { id: 'wash_7', name: 'تلميع الشمع (Wax)', price: 50, category: 'wash', image_url: 'images/3f71927f-8308-4b7b-9684-f1731745ee2f.jpg', is_popular: false },
-                { id: 'wash_13', name: 'تنظيف السقف', price: 300, category: 'wash', image_url: 'images/ccb39612-72ef-47cf-83a8-a2906a9dbae8.jpg', is_popular: false },
-                { id: 'wash_15', name: 'إزالة الروائح', price: 100, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: false },
-                { id: 'wash_16', name: 'إزالة البقع', price: 100, category: 'wash', image_url: 'images/0c6e1f4b-1fb2-489d-95b0-975a43f47685.jpg', is_popular: false },
+                { id: 'wash_9', name: 'تلميع الإطارات', price: 50, category: 'wash', image_url: 'images/4369e181-7821-4422-ac4e-8e39d873dd1d.jpg', is_popular: false },
+                { id: 'wash_12', name: 'تنظيف الفرش', price: 400, category: 'wash', image_url: 'images/4762dc84-223c-4e36-96dd-92f2121f2b29.jpg', is_popular: true },
+                { id: 'wash_13', name: 'تنظيف السقف', price: 300, category: 'wash', image_url: 'images/559ee5ae-1696-4f69-9f31-3d58da33d5d9.jpg', is_popular: false },
+                { id: 'wash_15', name: 'إزالة الروائح', price: 100, category: 'wash', image_url: 'images/9e5fd6e8-999a-4788-a579-22a319f4a88a.jpg', is_popular: false },
+                { id: 'wash_16', name: 'إزالة البقع', price: 100, category: 'wash', image_url: 'images/ccb39612-72ef-47cf-83a8-a2906a9dbae8.jpg', is_popular: false },
                 { id: 'wash_19', name: 'تشحيم الأبواب', price: 50, category: 'wash', image_url: 'images/eee7a9da-21cf-4c2a-93dd-2fee8ee2a9f3.jpg', is_popular: false },
-                { id: 'wash_20', name: 'غسيل موتور', price: 60, category: 'wash', image_url: 'images/559ee5ae-1696-4f69-9f31-3d58da33d5d9.jpg', is_popular: false },
-                { id: 'wash_20', name: 'غسيل شاسيه', price: 30, category: 'wash', image_url: 'images/c2613f0f-b564-4e41-84cf-2a1f10983697.jpeg', is_popular: false },
-                { id: 'wash_20', name: 'غسيل موتوسكلات', price: 50, category: 'wash', image_url: 'images/images.jpeg', is_popular: false },
+                { id: 'wash_20', name: 'غسيل موتور', price: 50, category: 'wash', image_url: 'images/f4cb70ff-a583-411d-b9ff-7a813876f146.jpg', is_popular: false },
 
                 // Carpet 
                 { id: 'carpet_21', name: 'غسيل سجاد عادي', price: 25, category: 'carpet', image_url: 'images/new_carpet.jpg', unit: '/ متر', is_popular: true },
