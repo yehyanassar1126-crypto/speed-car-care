@@ -1176,7 +1176,7 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    let alertMessage = `تم حفظ الفاتورة بنجاح ✅`;
+                    let alertMessage = `تم حفظ الفاتورة بنجاح ✅\n📲 تم إرسال تفاصيل طلبك للإدارة`;
 
                     if (washItems.length > 0) {
                         const wQueue = result.washQueueNumber || 0;
