@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-const SibApiV3Sdk = require('@getbrevo/brevo');
+import { sendWhatsApp } from './_whatsapp.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -25,33 +25,21 @@ export default async function handler(req, res) {
 
         if (dbError) throw new Error("Database failed: " + dbError.message);
 
-        // --- TASK 2: SEND EMAIL ALERT VIA BREVO ---
-        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        let apiKey = apiInstance.authentications['apiKey'];
-        apiKey.apiKey = process.env.BREVO_API_KEY;
-
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        
-        // CHANGE TO YOUR VERIFIED SENDER
-        sendSmtpEmail.sender = { "name": "Speed Car Care", "email": "nassaryehya26@gmail.com" }; 
-        
-        // CHANGE TO WHERE YOU WANT TO RECEIVE IT
-        sendSmtpEmail.to = [{ "email": "nassaryehya26@gmail.com" }]; 
-        
-        sendSmtpEmail.subject = `New Feedback from ${customerName}`;
-        sendSmtpEmail.htmlContent = `
-            <html>
-                <body>
-                    <h2>New Customer Feedback</h2>
-                    <p><strong>Customer:</strong> ${customerName}</p>
-                    <p><strong>Phone:</strong> ${customerPhone}</p>
-                    <p><strong>Rating:</strong> ${rating} Stars</p>
-                    <p><strong>Type:</strong> ${type}</p>
-                    <p><strong>Message:</strong> ${message}</p>
-                </body>
-            </html>`;
-
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        // --- TASK 2: SEND WHATSAPP ALERT ---
+        // The feedback is already saved, so a WhatsApp failure must not fail the request.
+        try {
+            await sendWhatsApp([
+                '*Speed Car Care - تقييم جديد* ⭐',
+                '',
+                `👤 العميل: ${customerName}`,
+                `📞 التليفون: ${customerPhone}`,
+                `⭐ التقييم: ${rating} نجوم`,
+                `📝 النوع: ${type}`,
+                `💬 الرسالة: ${message}`
+            ].join('\n'));
+        } catch (waError) {
+            console.error('WhatsApp feedback alert failed:', waError.message);
+        }
 
         // --- BOTH TASKS FINISHED SUCCESSFULLY ---
         return res.status(200).json({ success: true });
