@@ -1,285 +1,676 @@
-import { createClient } from '@supabase/supabase-js';
-import crypto from 'node:crypto';
-import { approvePending, rejectPending, PAYMENT_METHODS } from './_approval.js';
-
-// One endpoint for the whole dashboard:  POST /api/admin  { action, ...params }
-// Admins live in the `admin_users` table (bcrypt-hashed passwords, see sql/admin_migration.sql).
-// Login returns a signed token (12h) that the page sends as  Authorization: Bearer <token>.
-// The signing key is derived from SUPABASE_SERVICE_ROLE_KEY, so no extra env var is needed.
-
-const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
-const signKey = () => crypto.createHmac('sha256', 'scc-admin-v1').update(process.env.SUPABASE_SERVICE_ROLE_KEY || '').digest();
-const mac = b64 => crypto.createHmac('sha256', signKey()).update(b64).digest('base64url');
-
-function signToken(payload) {
-    const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
-    return b64 + '.' + mac(b64);
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>لوحة الإدارة - Speed Car Care</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+    --bg:#1a1a2e; --panel:#16213e; --panel-2:#1d2547; --line:rgba(255,255,255,.09);
+    --text:#eaeaea; --muted:#9aa0b8; --accent:#e94560; --accent-dark:#cc2f48;
+    --ok:#4ade80; --warn:#fbbf24; --radius:14px;
+    --font:'Cairo',system-ui,sans-serif;
 }
-function readToken(token) {
-    const [b64, sig] = String(token || '').split('.');
-    if (!b64 || !sig) return null;
-    const a = Buffer.from(sig), b = Buffer.from(mac(b64));
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-    try {
-        const p = JSON.parse(Buffer.from(b64, 'base64url').toString());
-        return p.exp > Date.now() ? p : null;
-    } catch { return null; }
+*{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:90px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font-family:inherit;font-size:1rem;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- login ---------- */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:50;padding:1.5rem}
+.login-box{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:2rem}
+.login-box img{width:150px;display:block;margin:0 auto 1.2rem}
+.login-box h1{font-size:1.2rem;text-align:center;margin-bottom:1.2rem}
+.field{display:block;margin-bottom:1rem}
+.field span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px;font-weight:600}
+.input{width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;outline:none}
+.input:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:10px;cursor:pointer;font-weight:700;transition:background .2s,border-color .2s}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#10261a}
+.btn.danger:hover{border-color:#ff5d73;color:#ff5d73}
+.btn.small{padding:6px 12px;font-size:.85rem}
+.err{color:#ff8a9b;font-size:.9rem;min-height:1.3em;margin-top:.6rem;text-align:center}
+
+/* ---------- shell ---------- */
+header.top{position:sticky;top:0;z-index:20;background:rgba(26,26,46,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:.8rem 1.2rem;padding-top:calc(.8rem + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.1rem}
+.brand i{color:var(--accent)}
+.spacer{flex:1}
+main{max-width:1250px;margin:0 auto;padding:1.2rem 1.2rem 4rem}
+
+/* today figure: the one thing to remember on this page */
+.today{display:grid;grid-template-columns:minmax(260px,1.2fr) 2fr;gap:1rem;margin-bottom:1.4rem}
+.today-main{background:linear-gradient(135deg,#e94560,#a51d38);border-radius:20px;padding:1.4rem 1.6rem;display:flex;flex-direction:column;justify-content:center}
+.today-main small{opacity:.85;font-weight:600}
+.today-main .big{font-size:clamp(2.4rem,6vw,3.6rem);font-weight:900;line-height:1.1;margin:.2rem 0}
+.today-main .sub{opacity:.9;font-size:.95rem}
+.pay-grid{align-content:center;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem}
+.pay-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem}
+.pay-card small{color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.pay-card b{display:block;font-size:1.4rem;margin-top:4px}
+
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;border-bottom:1px solid var(--line);padding-bottom:.8rem}
+.tab{padding:9px 18px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab .count{background:var(--ok);color:#10261a;border-radius:999px;font-size:.75rem;padding:1px 8px;font-weight:900}
+.tab .count.zero{display:none}
+.pane{display:none}.pane.active{display:block}
+
+/* ---------- requests ---------- */
+.req-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem}
+.req{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1.1rem;display:flex;flex-direction:column;gap:.8rem}
+.req-head{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start}
+.req-head h3{font-size:1.1rem}
+.req-head .meta{color:var(--muted);font-size:.85rem;margin-top:2px;direction:ltr;text-align:right}
+.queue{background:var(--panel-2);border-radius:8px;padding:2px 10px;font-weight:900;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.kv{display:flex;flex-wrap:wrap;gap:.4rem .9rem;font-size:.9rem;color:var(--muted)}
+.kv b{color:var(--text)}
+.lines{border-top:1px dashed var(--line);padding-top:.7rem;display:flex;flex-direction:column;gap:.45rem;font-size:.92rem}
+.line{display:flex;justify-content:space-between;gap:.8rem}
+.line .name{display:flex;gap:8px;align-items:flex-start}
+.line .name i{color:var(--accent);margin-top:5px;width:16px;text-align:center}
+.line .amt{font-weight:700;white-space:nowrap}
+.req-total{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:.7rem}
+.req-total b{font-size:1.5rem;color:var(--accent)}
+.pay-pick{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.pay-pick label{cursor:pointer}
+.pay-pick input{position:absolute;opacity:0;pointer-events:none}
+.pay-pick span{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 6px;border:1.5px solid var(--line);border-radius:10px;font-weight:700;font-size:.9rem;transition:all .15s}
+.pay-pick input:checked + span{border-color:var(--ok);background:rgba(74,222,128,.12);color:var(--ok)}
+.pay-pick input:focus-visible + span{outline:2px solid var(--accent)}
+.req-actions{display:flex;gap:.6rem}
+.req-actions .btn.ok{flex:1}
+
+.empty{text-align:center;color:var(--muted);padding:3.5rem 1rem;border:1px dashed var(--line);border-radius:var(--radius)}
+.empty i{font-size:2.2rem;display:block;margin-bottom:.8rem;opacity:.6}
+
+/* ---------- tables ---------- */
+.toolbar{display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.toolbar .input{width:auto;min-width:200px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--line);font-size:.92rem;vertical-align:top}
+th{background:var(--panel-2);color:var(--muted);font-weight:700;font-size:.82rem;position:sticky;top:0}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:center;font-variant-numeric:tabular-nums}
+tfoot td{font-weight:900;background:var(--panel-2)}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:var(--panel-2)}
+.tag.none{color:var(--muted)}
+.low{color:var(--warn);font-weight:900}
+.zero{color:#ff8a9b;font-weight:900}
+.pos{color:var(--ok)}.neg{color:#ff8a9b}
+.note{color:var(--muted);font-size:.85rem;margin-top:.8rem;line-height:1.7}
+
+/* ---------- modal ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:18px;width:100%;max-width:440px;padding:1.5rem;max-height:92vh;overflow:auto}
+.modal h3{margin-bottom:1rem;font-size:1.15rem}
+.modal .row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.modal .actions{display:flex;gap:.6rem;margin-top:.4rem}
+.modal .actions .btn.primary{flex:1}
+
+.toast{position:fixed;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#0f3d24;border:1px solid var(--ok);color:var(--ok);padding:10px 22px;border-radius:999px;font-weight:700;z-index:80;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.show{opacity:1}.toast.bad{background:#4a1520;border-color:#ff5d73;color:#ff8a9b}
+
+@media (max-width:820px){
+    .today{grid-template-columns:1fr}
+    .req-list{grid-template-columns:1fr}
+    main{padding:1rem .8rem 4rem}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+    <div class="login-box">
+        <img src="logo.png" alt="Speed Car Care">
+        <h1>لوحة الإدارة</h1>
+        <label class="field"><span>اسم المستخدم</span>
+            <input class="input" id="un" autocomplete="username" autocapitalize="none" dir="ltr">
+        </label>
+        <label class="field"><span>كلمة السر</span>
+            <input class="input" type="password" id="pw" autocomplete="current-password" dir="ltr">
+        </label>
+        <button class="btn primary" style="width:100%" id="loginBtn">دخول</button>
+        <div class="err" id="loginErr"></div>
+    </div>
+</div>
+
+<!-- APP -->
+<header class="top" id="topbar" hidden>
+    <div class="brand"><i class="fas fa-car-wash"></i> Speed Car Care</div>
+    <div class="spacer"></div>
+    <span id="whoami" style="color:var(--muted);font-size:.9rem"></span>
+    <button class="btn small" id="refreshBtn"><i class="fas fa-rotate"></i> تحديث</button>
+    <button class="btn small primary" id="exportBtn"><i class="fas fa-file-excel"></i> تصدير Excel</button>
+    <button class="btn small" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> خروج</button>
+</header>
+
+<main id="app" hidden>
+
+    <section class="today">
+        <div class="today-main">
+            <small>إجمالي اليوم — <span id="todayLabel"></span></small>
+            <div class="big"><span id="todayTotal">0</span> <span style="font-size:1.2rem;font-weight:700">ج.م</span></div>
+            <div class="sub"><span id="todayCount">0</span> فاتورة مؤكدة</div>
+        </div>
+        <div class="pay-grid" id="todayPay"></div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+        <button class="tab active" data-tab="requests"><i class="fas fa-inbox"></i> الطلبات <span class="count zero" id="pendingCount">0</span></button>
+        <button class="tab" data-tab="day"><i class="fas fa-calendar-day"></i> حساب اليوم</button>
+        <button class="tab" data-tab="invoices"><i class="fas fa-file-invoice"></i> كل الفواتير</button>
+        <button class="tab" data-tab="oil"><i class="fas fa-oil-can"></i> مخزن الزيت</button>
+        <button class="tab" data-tab="admins"><i class="fas fa-user-shield"></i> المديرين</button>
+    </nav>
+
+    <!-- REQUESTS -->
+    <section class="pane active" id="pane-requests">
+        <div class="req-list" id="reqList"></div>
+    </section>
+
+    <!-- DAY -->
+    <section class="pane" id="pane-day">
+        <div class="toolbar">
+            <label class="field" style="margin:0;display:flex;align-items:center;gap:8px"><span style="margin:0">اليوم</span>
+                <input type="date" class="input" id="dayPicker"></label>
+            <button class="btn small" id="todayBtn">النهارده</button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>الوقت</th><th>العميل</th><th>السيارة</th><th>الخدمات</th><th class="num">الإجمالي</th><th>الدفع</th></tr></thead>
+                <tbody id="dayRows"></tbody>
+                <tfoot id="dayFoot"></tfoot>
+            </table>
+        </div>
+        <h3 style="margin:1.6rem 0 .8rem">إجمالي الأيام السابقة</h3>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>اليوم</th><th class="num">الفواتير</th><th class="num">الإجمالي</th><th class="num">كاش</th><th class="num">فيزا</th><th class="num">إنستاباي</th><th class="num">محفظة</th><th class="num">غير محدد</th></tr></thead>
+                <tbody id="historyRows"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- INVOICES -->
+    <section class="pane" id="pane-invoices">
+        <div class="toolbar">
+            <input class="input" id="invSearch" placeholder="ابحث بالاسم أو التليفون أو رقم السيارة">
+            <span class="note" id="invInfo" style="margin:0"></span>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>التاريخ</th><th>العميل</th><th>التليفون</th><th>السيارة</th><th>الخدمات</th><th class="num">الإجمالي</th><th>الدفع</th></tr></thead>
+                <tbody id="invRows"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- OIL -->
+    <section class="pane" id="pane-oil">
+        <div class="toolbar">
+            <button class="btn primary" id="newOilBtn"><i class="fas fa-plus"></i> نوع زيت جديد</button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr>
+                    <th>الزيت</th><th class="num">السعر</th><th class="num">كم الصلاحية</th>
+                    <th class="num">رصيد أول</th><th class="num">اتضاف</th><th class="num">اتباع</th><th class="num">تسوية</th><th class="num">المتبقي</th><th></th>
+                </tr></thead>
+                <tbody id="oilRows"></tbody>
+            </table>
+        </div>
+        <p class="note">
+            <b>اتباع</b> محسوبة من كل الفواتير المؤكدة من أول يوم. <b>اتضاف</b> هو اللي بتسجله من هنا (توريد أو نوع جديد).
+            <b>تسوية</b> هي فرق الجرد اللي بتعمله بإيدك. <b>رصيد أول</b> محسوب = المتبقي − اتضاف − تسوية + اتباع.
+        </p>
+    </section>
+
+    <!-- ADMINS -->
+    <section class="pane" id="pane-admins">
+        <div class="toolbar">
+            <button class="btn primary" id="newAdminBtn"><i class="fas fa-user-plus"></i> مدير جديد</button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>آخر دخول</th><th></th></tr></thead>
+                <tbody id="adminRows"></tbody>
+            </table>
+        </div>
+        <p class="note">أي مدير يقدر يضيف أو يمسح مديرين تانيين ويغيّر كلمات السر. كلمات السر متخزنة مشفّرة ومحدش (حتى أنا) يقدر يشوفها. بعد 5 محاولات غلط الحساب بيتقفل 15 دقيقة.</p>
+    </section>
+</main>
+
+<!-- MODALS -->
+<div class="modal-bg" id="oilModal">
+    <div class="modal">
+        <h3 id="oilModalTitle">نوع زيت جديد</h3>
+        <label class="field"><span>اسم الزيت</span><input class="input" id="oName"></label>
+        <div class="row">
+            <label class="field"><span>السعر (ج.م)</span><input class="input" type="number" min="0" step="0.01" id="oPrice"></label>
+            <label class="field"><span>كم الصلاحية</span><input class="input" type="number" min="0" id="oKm" placeholder="مثال: 5000"></label>
+        </div>
+        <label class="field" id="oStockWrap"><span>الكمية الحالية (عدد الجراكن)</span><input class="input" type="number" min="0" id="oStock" value="0"></label>
+        <div class="err" id="oilErr"></div>
+        <div class="actions"><button class="btn primary" id="oilSave">حفظ</button><button class="btn" data-close>إلغاء</button></div>
+    </div>
+</div>
+
+<div class="modal-bg" id="stockModal">
+    <div class="modal">
+        <h3 id="stockTitle"></h3>
+        <label class="field"><span id="stockLabel"></span><input class="input" type="number" min="0" id="sQty"></label>
+        <label class="field"><span>ملاحظة (اختياري)</span><input class="input" id="sNote"></label>
+        <div class="err" id="stockErr"></div>
+        <div class="actions"><button class="btn primary" id="stockSave">حفظ</button><button class="btn" data-close>إلغاء</button></div>
+    </div>
+</div>
+
+<div class="modal-bg" id="adminModal">
+    <div class="modal">
+        <h3 id="adminModalTitle">مدير جديد</h3>
+        <div id="adminNewFields">
+            <label class="field"><span>الاسم (اختياري)</span><input class="input" id="aDisplay"></label>
+            <label class="field"><span>اسم المستخدم (إنجليزي)</span><input class="input" id="aUser" dir="ltr" autocapitalize="none"></label>
+        </div>
+        <label class="field"><span>كلمة السر (6 على الأقل)</span><input class="input" type="text" id="aPass" dir="ltr" autocomplete="off"></label>
+        <div class="err" id="adminErr"></div>
+        <div class="actions"><button class="btn primary" id="adminSave">حفظ</button><button class="btn" data-close>إلغاء</button></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PAY = {
+    cash:     { label: 'كاش',               icon: 'fa-money-bill-wave' },
+    card:     { label: 'فيزا / كارت',        icon: 'fa-credit-card' },
+    instapay: { label: 'إنستاباي',           icon: 'fa-mobile-screen' },
+    wallet:   { label: 'محفظة (فودافون كاش)', icon: 'fa-wallet' }
+};
+const TZ = 'Africa/Cairo';
+
+let token = sessionStorage.getItem('scc_admin_token') || '';
+let me = null, admins = [];
+let pending = [], invoices = [], oils = [], oilLog = [], dailyTotals = [];
+let knownPendingIds = new Set(), firstPendingLoad = true;
+let pollTimer = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const dayKey = d => new Date(d).toLocaleDateString('en-CA', { timeZone: TZ });          // yyyy-mm-dd (Cairo)
+const timeStr = d => new Date(d).toLocaleTimeString('ar-EG', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const dateStr = d => new Date(d).toLocaleDateString('ar-EG', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric' });
+const payTag = m => PAY[m] ? `<span class="tag"><i class="fas ${PAY[m].icon}"></i> ${PAY[m].label}</span>` : `<span class="tag none">غير محدد</span>`;
+
+function toast(msg, bad) {
+    const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// Supabase returns max 1000 rows per request, so read in pages.
-async function fetchAll(makeQuery) {
-    const out = [];
-    for (let from = 0; ; from += 1000) {
-        const { data, error } = await makeQuery().range(from, from + 999);
-        if (error) throw error;
-        out.push(...data);
-        if (data.length < 1000) break;
-    }
-    return out;
-}
-
-// "name (x2) | other (x1)"  ->  [{name, quantity}]   (for invoices saved before `items` existed)
-function parseOilServices(text) {
-    if (!text) return [];
-    return String(text).split('|').map(s => s.trim()).filter(Boolean).map(part => {
-        const m = part.match(/^(.*?)\s*\(x(\d+)\)\s*$/);
-        return m ? { name: m[1].trim(), quantity: Number(m[2]) } : { name: part, quantity: 1 };
+async function api(action, params = {}) {
+    const r = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action, ...params })
     });
+    const raw = await r.text();
+    let j; try { j = JSON.parse(raw); } catch {
+        console.error('API', r.status, raw);
+        throw new Error('رد غير متوقع من السيرفر — كود ' + r.status);
+    }
+    if (r.status === 401 && action !== 'login') { logout(true); throw new Error(j.error); }
+    if (!j.success) throw new Error(j.error || 'حصل خطأ');
+    return j;
 }
 
-const toInt = v => Math.trunc(Number(v));
-
-export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method Not Allowed' });
-
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const body = req.body || {};
-
-    // ---- login (the only action that does not need a token) ----
-    if (body.action === 'login') {
-        try {
-            const { data, error } = await supabase.rpc('admin_login', {
-                p_username: String(body.username || ''), p_password: String(body.password || '')
-            });
-            if (error) throw error;
-            if (!data?.ok) {
-                return res.status(401).json({
-                    success: false,
-                    error: data?.locked ? 'الحساب اتقفل 15 دقيقة بسبب محاولات غلط كتير' : 'اسم المستخدم أو كلمة السر غير صحيحة'
-                });
-            }
-            const token = signToken({ uid: data.id, exp: Date.now() + TOKEN_TTL_MS });
-            return res.json({ success: true, token, user: { id: data.id, username: data.username, display_name: data.display_name } });
-        } catch (e) {
-            return res.status(500).json({ success: false, error: e.message });
-        }
-    }
-
-    // ---- everything else needs a valid token of an admin that still exists ----
-    const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    const session = readToken(bearer);
-    let me = null;
-    if (session) {
-        const { data } = await supabase.from('admin_users').select('id, username, display_name').eq('id', session.uid).maybeSingle();
-        me = data;
-    }
-    if (!me) return res.status(401).json({ success: false, error: 'سجّل دخول تاني' });
-
+/* ---------------- login ---------------- */
+async function login() {
+    $('loginErr').textContent = '';
+    $('loginBtn').disabled = true;
     try {
-        switch (body.action) {
-
-            case 'ping':
-                return res.json({ success: true, user: me });
-
-            // ---------------- Admins ----------------
-            case 'admins': {
-                const { data, error } = await supabase.from('admin_users')
-                    .select('id, username, display_name, last_login, created_at').order('id', { ascending: true });
-                if (error) throw error;
-                return res.json({ success: true, data, me_id: me.id });
-            }
-
-            case 'admin_add': {
-                const username = String(body.username || '').trim();
-                const password = String(body.password || '');
-                if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) {
-                    return res.status(400).json({ success: false, error: 'اسم المستخدم: 3 إلى 30 حرف إنجليزي أو أرقام (_ . - مسموحين)' });
-                }
-                if (password.length < 6) return res.status(400).json({ success: false, error: 'كلمة السر لازم تكون 6 حروف أو أرقام على الأقل' });
-                const { error } = await supabase.rpc('admin_create', {
-                    p_username: username, p_password: password, p_display: String(body.display_name || '')
-                });
-                if (error) {
-                    const dup = /duplicate|unique/i.test(error.message);
-                    return res.status(dup ? 400 : 500).json({ success: false, error: dup ? 'اسم المستخدم ده موجود بالفعل' : error.message });
-                }
-                return res.json({ success: true });
-            }
-
-            case 'admin_password': {
-                const password = String(body.password || '');
-                if (password.length < 6) return res.status(400).json({ success: false, error: 'كلمة السر لازم تكون 6 حروف أو أرقام على الأقل' });
-                const { error } = await supabase.rpc('admin_set_password', { p_id: body.id, p_password: password });
-                if (error) throw error;
-                return res.json({ success: true });
-            }
-
-            case 'admin_delete': {
-                if (String(body.id) === String(me.id)) return res.status(400).json({ success: false, error: 'مينفعش تمسح حسابك اللي داخل بيه' });
-                const { count } = await supabase.from('admin_users').select('id', { count: 'exact', head: true });
-                if ((count || 0) <= 1) return res.status(400).json({ success: false, error: 'لازم يفضل مدير واحد على الأقل' });
-                const { error } = await supabase.from('admin_users').delete().eq('id', body.id);
-                if (error) throw error;
-                return res.json({ success: true });
-            }
-
-            // ---------------- Requests ----------------
-            case 'pending': {
-                const { data, error } = await supabase
-                    .from('pending_invoices').select('*').order('id', { ascending: true });
-                if (error) throw error;
-                return res.json({ success: true, data });
-            }
-
-            case 'approve': {
-                if (!PAYMENT_METHODS.includes(body.payment_method)) {
-                    return res.status(400).json({ success: false, error: 'اختار طريقة الدفع' });
-                }
-                const r = await approvePending(supabase, body.id, body.payment_method);
-                if (r.notFound) return res.status(404).json({ success: false, error: 'الطلب مش موجود أو اتعالج قبل كده' });
-                if (!r.ok) return res.status(500).json({ success: false, error: r.error });
-                return res.json({ success: true });
-            }
-
-            case 'reject': {
-                const r = await rejectPending(supabase, body.id);
-                if (r.notFound) return res.status(404).json({ success: false, error: 'الطلب مش موجود أو اتعالج قبل كده' });
-                return res.json({ success: true });
-            }
-
-            // ---------------- Invoices / daily totals ----------------
-            case 'invoices': {
-                const data = await fetchAll(() =>
-                    supabase.from('invoices').select('*').order('created_at', { ascending: false }));
-                return res.json({ success: true, data });
-            }
-
-            case 'daily_totals': {
-                const data = await fetchAll(() =>
-                    supabase.from('daily_totals').select('*').order('day', { ascending: false }));
-                return res.json({ success: true, data });
-            }
-
-            // ---------------- Oil inventory ----------------
-            case 'oil_report': {
-                const { data: products, error: pErr } = await supabase
-                    .from('oil_products').select('*').order('name', { ascending: true });
-                if (pErr) throw pErr;
-
-                const invoices = await fetchAll(() =>
-                    supabase.from('invoices').select('id, oil_services, items').order('created_at', { ascending: true }));
-                const log = await fetchAll(() =>
-                    supabase.from('oil_stock_log').select('*').order('created_at', { ascending: false }));
-
-                const sold = {};
-                for (const inv of invoices) {
-                    const lines = Array.isArray(inv.items) && inv.items.length
-                        ? inv.items.filter(i => i.category === 'oil').map(i => ({ name: i.name, quantity: Number(i.quantity) || 0 }))
-                        : parseOilServices(inv.oil_services);
-                    for (const l of lines) sold[l.name] = (sold[l.name] || 0) + l.quantity;
-                }
-
-                const added = {}, adjusted = {};
-                for (const l of log) {
-                    const bucket = l.type === 'add' ? added : adjusted;
-                    bucket[l.product_name] = (bucket[l.product_name] || 0) + l.qty;
-                }
-
-                const rows = products.map(p => {
-                    const s = sold[p.name] || 0, a = added[p.name] || 0, j = adjusted[p.name] || 0;
-                    const remaining = Number(p.stock) || 0;
-                    return {
-                        id: p.id, name: p.name, price: Number(p.price) || 0,
-                        max_kilometers: Number(p.max_kilometers) || 0,
-                        opening: remaining - a - j + s,   // رصيد قبل أول حركة مسجلة
-                        added: a, sold: s, adjusted: j, remaining
-                    };
-                });
-
-                // Oils that were sold but no longer exist in oil_products
-                const known = new Set(products.map(p => p.name));
-                for (const name of Object.keys(sold)) {
-                    if (!known.has(name)) rows.push({
-                        id: null, name, price: 0, max_kilometers: 0, opening: null,
-                        added: added[name] || 0, sold: sold[name], adjusted: adjusted[name] || 0, remaining: null
-                    });
-                }
-                return res.json({ success: true, data: rows, log });
-            }
-
-            case 'add_oil': {
-                const name = String(body.name || '').trim();
-                const price = Number(body.price), stock = toInt(body.stock || 0), km = toInt(body.max_kilometers || 0);
-                if (!name) return res.status(400).json({ success: false, error: 'اكتب اسم الزيت' });
-                if (!(price >= 0)) return res.status(400).json({ success: false, error: 'السعر غير صحيح' });
-                if (!(stock >= 0)) return res.status(400).json({ success: false, error: 'الكمية غير صحيحة' });
-
-                const { data: dup } = await supabase.from('oil_products').select('id').ilike('name', name).limit(1);
-                if (dup && dup.length) return res.status(400).json({ success: false, error: 'النوع ده موجود بالفعل' });
-
-                const { data, error } = await supabase.from('oil_products')
-                    .insert([{ name, price, stock, max_kilometers: km || 0 }]).select().single();
-                if (error) throw error;
-                if (stock > 0) {
-                    await supabase.from('oil_stock_log').insert([{
-                        product_id: String(data.id), product_name: name, type: 'add', qty: stock, note: 'رصيد افتتاحي لنوع جديد'
-                    }]);
-                }
-                return res.json({ success: true, data });
-            }
-
-            case 'edit_oil': {
-                const price = Number(body.price), km = toInt(body.max_kilometers || 0);
-                if (!(price >= 0)) return res.status(400).json({ success: false, error: 'السعر غير صحيح' });
-                const { error } = await supabase.from('oil_products')
-                    .update({ price, max_kilometers: km || 0 }).eq('id', body.id);
-                if (error) throw error;
-                return res.json({ success: true });
-            }
-
-            case 'restock': {
-                const qty = toInt(body.qty);
-                if (!(qty > 0)) return res.status(400).json({ success: false, error: 'اكتب كمية أكبر من صفر' });
-                const { data: p, error } = await supabase.from('oil_products').select('id, name, stock').eq('id', body.id).single();
-                if (error || !p) return res.status(404).json({ success: false, error: 'الزيت مش موجود' });
-                const { error: uErr } = await supabase.from('oil_products')
-                    .update({ stock: (Number(p.stock) || 0) + qty }).eq('id', p.id);
-                if (uErr) throw uErr;
-                await supabase.from('oil_stock_log').insert([{
-                    product_id: String(p.id), product_name: p.name, type: 'add', qty, note: body.note || 'توريد'
-                }]);
-                return res.json({ success: true });
-            }
-
-            case 'adjust': {
-                const newStock = toInt(body.newStock);
-                if (!(newStock >= 0)) return res.status(400).json({ success: false, error: 'الكمية غير صحيحة' });
-                const { data: p, error } = await supabase.from('oil_products').select('id, name, stock').eq('id', body.id).single();
-                if (error || !p) return res.status(404).json({ success: false, error: 'الزيت مش موجود' });
-                const delta = newStock - (Number(p.stock) || 0);
-                if (delta === 0) return res.json({ success: true });
-                const { error: uErr } = await supabase.from('oil_products').update({ stock: newStock }).eq('id', p.id);
-                if (uErr) throw uErr;
-                await supabase.from('oil_stock_log').insert([{
-                    product_id: String(p.id), product_name: p.name, type: 'adjust', qty: delta, note: body.note || 'تسوية جرد'
-                }]);
-                return res.json({ success: true });
-            }
-
-            default:
-                return res.status(400).json({ success: false, error: 'Unknown action' });
-        }
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
-    }
+        const j = await api('login', { username: $('un').value, password: $('pw').value });
+        token = j.token; me = j.user;
+        sessionStorage.setItem('scc_admin_token', token);
+        $('pw').value = '';
+        start();
+    } catch (e) { $('loginErr').textContent = e.message; }
+    $('loginBtn').disabled = false;
 }
+function logout(silent) {
+    sessionStorage.removeItem('scc_admin_token'); token = ''; me = null;
+    clearInterval(pollTimer);
+    $('login').hidden = false; $('login').style.display = 'flex';
+    $('topbar').hidden = true; $('app').hidden = true;
+    if (!silent) { $('pw').value = ''; $('un').value = ''; }
+}
+$('loginBtn').onclick = login;
+['un', 'pw'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+$('logoutBtn').onclick = () => logout(false);
+
+async function start() {
+    $('login').style.display = 'none';
+    $('topbar').hidden = false; $('app').hidden = false;
+    $('dayPicker').value = dayKey(Date.now());
+    if (me) $('whoami').textContent = '👤 ' + (me.display_name || me.username);
+    await loadAll();
+    clearInterval(pollTimer);
+    pollTimer = setInterval(loadPending, 15000);
+}
+
+async function loadAll() {
+    try {
+        const [p, i, o, d, a] = await Promise.all([api('pending'), api('invoices'), api('oil_report'), api('daily_totals'), api('admins')]);
+        pending = p.data; invoices = i.data; oils = o.data; oilLog = o.log; dailyTotals = d.data; admins = a.data;
+        notePending(); renderAll();
+    } catch (e) { toast(e.message, true); }
+}
+async function loadPending() {
+    try { pending = (await api('pending')).data; notePending(); renderPending(); } catch (e) { /* silent on poll */ }
+}
+function notePending() {
+    const ids = new Set(pending.map(p => p.id));
+    if (!firstPendingLoad && [...ids].some(id => !knownPendingIds.has(id))) toast('طلب جديد وصل 🔔');
+    knownPendingIds = ids; firstPendingLoad = false;
+}
+$('refreshBtn').onclick = async () => { await loadAll(); toast('تم التحديث'); };
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === b));
+    document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + b.dataset.tab));
+});
+
+/* ---------------- render ---------------- */
+function renderAll() { renderToday(); renderPending(); renderDay(); renderInvoices(); renderOil(); renderAdmins(); }
+
+function sumBy(list) {
+    const s = { total: 0, count: list.length, cash: 0, card: 0, instapay: 0, wallet: 0, none: 0 };
+    list.forEach(r => { const t = Number(r.total) || 0; s.total += t; (PAY[r.payment_method] ? s[r.payment_method] += t : s.none += t); });
+    return s;
+}
+
+function renderToday() {
+    const today = dayKey(Date.now());
+    const s = sumBy(invoices.filter(r => r.created_at && dayKey(r.created_at) === today));
+    $('todayLabel').textContent = dateStr(Date.now());
+    $('todayTotal').textContent = money(s.total);
+    $('todayCount').textContent = s.count;
+    $('todayPay').innerHTML = Object.entries(PAY).map(([k, v]) =>
+        `<div class="pay-card"><small><i class="fas ${v.icon}"></i> ${v.label}</small><b>${money(s[k])}</b></div>`).join('')
+        + (s.none ? `<div class="pay-card"><small><i class="fas fa-circle-question"></i> غير محدد</small><b>${money(s.none)}</b></div>` : '');
+}
+
+function lineBlock(icon, label, text, amt) {
+    if (!text) return '';
+    return `<div class="line"><div class="name"><i class="fas ${icon}"></i><span><b>${label}:</b> ${esc(text)}</span></div><div class="amt">${money(amt)} ج.م</div></div>`;
+}
+
+function renderPending() {
+    $('pendingCount').textContent = pending.length;
+    $('pendingCount').classList.toggle('zero', pending.length === 0);
+    if (!pending.length) {
+        $('reqList').innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="fas fa-inbox"></i>مفيش طلبات مستنية دلوقتي.<br>أي طلب جديد هيظهر هنا لوحده.</div>`;
+        return;
+    }
+    // keep the payment choice the owner already made while the list refreshes
+    const chosen = {};
+    document.querySelectorAll('.req').forEach(el => {
+        const c = el.querySelector('input:checked'); if (c) chosen[el.dataset.id] = c.value;
+    });
+    $('reqList').innerHTML = pending.map((p, idx) => {
+        const d = p.invoice_data || {};
+        const sel = chosen[p.id] || 'cash';
+        return `
+        <article class="req" data-id="${esc(p.id)}">
+            <div class="req-head">
+                <div>
+                    <h3>${esc(d.customer_name || 'بدون اسم')}</h3>
+                    <div class="meta">${esc(d.mobile_number || '')}${p.created_at ? ' · ' + timeStr(p.created_at) : ''}</div>
+                </div>
+                <span class="queue">#${idx + 1}</span>
+            </div>
+            <div class="kv">
+                <span>السيارة: <b>${esc(d.car_number || '—')}</b></span>
+                ${d.current_km ? `<span>العداد: <b>${esc(d.current_km)}</b></span>` : ''}
+                ${d.next_km ? `<span>الزيت الجاي عند: <b>${esc(d.next_km)}</b></span>` : ''}
+                ${d.carpet_code ? `<span>كود السجاد: <b>${esc(d.carpet_code)}</b></span>` : ''}
+            </div>
+            <div class="lines">
+                ${lineBlock('fa-shower', 'غسيل', d.wash_services, d.wash_total)}
+                ${lineBlock('fa-oil-can', 'زيت', d.oil_services, d.oil_total)}
+                ${lineBlock('fa-chair', 'سجاد', d.carpet_services, d.carpet_total)}
+            </div>
+            <div class="req-total"><span>الإجمالي</span><b>${money(d.total)} ج.م</b></div>
+            <div class="pay-pick" role="radiogroup" aria-label="طريقة الدفع">
+                ${Object.entries(PAY).map(([k, v]) => `
+                    <label><input type="radio" name="pay-${esc(p.id)}" value="${k}" ${k === sel ? 'checked' : ''}>
+                    <span><i class="fas ${v.icon}"></i> ${v.label}</span></label>`).join('')}
+            </div>
+            <div class="req-actions">
+                <button class="btn ok" onclick="approve('${esc(p.id)}', this)"><i class="fas fa-check"></i> تأكيد وحفظ</button>
+                <button class="btn danger" onclick="reject('${esc(p.id)}', this)"><i class="fas fa-xmark"></i> رفض</button>
+            </div>
+        </article>`;
+    }).join('');
+}
+
+async function approve(id, btn) {
+    const el = btn.closest('.req');
+    const method = el.querySelector('input:checked')?.value;
+    if (!method) return toast('اختار طريقة الدفع', true);
+    btn.disabled = true;
+    try {
+        await api('approve', { id, payment_method: method });
+        toast('تم الحفظ ✅');
+        await loadAll();
+    } catch (e) { toast(e.message, true); btn.disabled = false; }
+}
+async function reject(id, btn) {
+    if (!confirm('متأكد إنك عايز ترفض الطلب ده؟ هيتمسح وكميات الزيت هترجع للمخزن.')) return;
+    btn.disabled = true;
+    try { await api('reject', { id }); toast('تم رفض الطلب'); await loadAll(); }
+    catch (e) { toast(e.message, true); btn.disabled = false; }
+}
+
+function servicesOf(r) {
+    return [r.wash_services, r.oil_services, r.carpet_services].filter(Boolean).map(esc).join('<br>') || '—';
+}
+
+function renderDay() {
+    const key = $('dayPicker').value || dayKey(Date.now());
+    const list = invoices.filter(r => r.created_at && dayKey(r.created_at) === key)
+                         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    $('dayRows').innerHTML = list.length ? list.map(r => `
+        <tr><td>${timeStr(r.created_at)}</td><td>${esc(r.customer_name)}<br><small style="color:var(--muted)">${esc(r.mobile_number)}</small></td>
+        <td>${esc(r.car_number || '—')}</td><td>${servicesOf(r)}</td>
+        <td class="num">${money(r.total)}</td><td>${payTag(r.payment_method)}</td></tr>`).join('')
+        : `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">مفيش فواتير في اليوم ده</td></tr>`;
+    const s = sumBy(list);
+    $('dayFoot').innerHTML = list.length ? `<tr><td colspan="4">الإجمالي (${s.count} فاتورة)</td><td class="num">${money(s.total)}</td>
+        <td>${Object.entries(PAY).filter(([k]) => s[k]).map(([k, v]) => `${v.label}: ${money(s[k])}`).join(' | ')}${s.none ? ` | غير محدد: ${money(s.none)}` : ''}</td></tr>` : '';
+
+    $('historyRows').innerHTML = dailyTotals.length ? dailyTotals.map(d => `
+        <tr><td>${esc(d.day)}</td><td class="num">${d.invoices_count}</td><td class="num"><b>${money(d.total)}</b></td>
+        <td class="num">${money(d.cash)}</td><td class="num">${money(d.card)}</td><td class="num">${money(d.instapay)}</td>
+        <td class="num">${money(d.wallet)}</td><td class="num">${money(d.unspecified)}</td></tr>`).join('')
+        : `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">لسه مفيش بيانات</td></tr>`;
+}
+$('dayPicker').onchange = renderDay;
+$('todayBtn').onclick = () => { $('dayPicker').value = dayKey(Date.now()); renderDay(); };
+
+function renderInvoices() {
+    const q = $('invSearch').value.trim().toLowerCase();
+    let list = invoices;
+    if (q) list = list.filter(r => [r.customer_name, r.mobile_number, r.car_number].some(v => String(v || '').toLowerCase().includes(q)));
+    const shown = list.slice(0, 300);
+    $('invInfo').textContent = `${list.length} فاتورة${list.length > shown.length ? ` (بنعرض أحدث ${shown.length} — التصدير بيشمل الكل)` : ''}`;
+    $('invRows').innerHTML = shown.length ? shown.map(r => `
+        <tr><td>${r.created_at ? dateStr(r.created_at) + '<br><small style="color:var(--muted)">' + timeStr(r.created_at) + '</small>' : '—'}</td>
+        <td>${esc(r.customer_name)}</td><td style="direction:ltr;text-align:right">${esc(r.mobile_number)}</td>
+        <td>${esc(r.car_number || '—')}</td><td>${servicesOf(r)}</td>
+        <td class="num">${money(r.total)}</td><td>${payTag(r.payment_method)}</td></tr>`).join('')
+        : `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:2rem">مفيش نتائج</td></tr>`;
+}
+$('invSearch').oninput = renderInvoices;
+
+function signed(n) { return n > 0 ? `<span class="pos">+${n}</span>` : n < 0 ? `<span class="neg">${n}</span>` : '0'; }
+function renderOil() {
+    $('oilRows').innerHTML = oils.length ? oils.map(o => {
+        const rem = o.remaining;
+        const cls = rem === null ? '' : rem <= 0 ? 'zero' : rem <= 1 ? 'low' : '';
+        const actions = o.id === null ? '<small style="color:var(--muted)">نوع محذوف</small>' : `
+            <button class="btn small" onclick="openStock('${esc(o.id)}','add')"><i class="fas fa-plus"></i> إضافة</button>
+            <button class="btn small" onclick="openStock('${esc(o.id)}','adjust')">جرد</button>
+            <button class="btn small" onclick="openOil('${esc(o.id)}')" aria-label="تعديل"><i class="fas fa-pen"></i></button>`;
+        return `<tr><td><b>${esc(o.name)}</b></td><td class="num">${money(o.price)}</td><td class="num">${o.max_kilometers || '—'}</td>
+            <td class="num">${o.opening ?? '—'}</td><td class="num">${o.added}</td><td class="num">${o.sold}</td>
+            <td class="num">${signed(o.adjusted)}</td><td class="num ${cls}">${rem ?? '—'}</td><td style="white-space:nowrap">${actions}</td></tr>`;
+    }).join('') : `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2rem">مفيش أنواع زيت. اضغط «نوع زيت جديد» وابدأ.</td></tr>`;
+}
+
+/* ---------------- oil modals ---------------- */
+let editingOil = null, stockMode = null, stockTarget = null;
+const openModal = id => $(id).classList.add('open');
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => b.closest('.modal-bg').classList.remove('open'));
+document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('mousedown', e => { if (e.target === m) m.classList.remove('open'); }));
+
+$('newOilBtn').onclick = () => openOil(null);
+function openOil(id) {
+    editingOil = id ? oils.find(o => String(o.id) === String(id)) : null;
+    $('oilModalTitle').textContent = editingOil ? 'تعديل ' + editingOil.name : 'نوع زيت جديد';
+    $('oName').value = editingOil?.name || ''; $('oName').disabled = !!editingOil;
+    $('oPrice').value = editingOil?.price ?? ''; $('oKm').value = editingOil?.max_kilometers || '';
+    $('oStock').value = 0; $('oStockWrap').style.display = editingOil ? 'none' : '';
+    $('oilErr').textContent = ''; openModal('oilModal');
+    setTimeout(() => (editingOil ? $('oPrice') : $('oName')).focus(), 50);
+}
+$('oilSave').onclick = async () => {
+    $('oilErr').textContent = ''; $('oilSave').disabled = true;
+    try {
+        if (editingOil) await api('edit_oil', { id: editingOil.id, price: $('oPrice').value, max_kilometers: $('oKm').value });
+        else await api('add_oil', { name: $('oName').value, price: $('oPrice').value, max_kilometers: $('oKm').value, stock: $('oStock').value });
+        $('oilModal').classList.remove('open'); toast('تم الحفظ ✅'); await loadAll();
+    } catch (e) { $('oilErr').textContent = e.message; }
+    $('oilSave').disabled = false;
+};
+
+function openStock(id, mode) {
+    stockTarget = oils.find(o => String(o.id) === String(id)); stockMode = mode;
+    $('stockTitle').textContent = (mode === 'add' ? 'إضافة كمية — ' : 'جرد — ') + stockTarget.name;
+    $('stockLabel').textContent = mode === 'add' ? 'الكمية الموردة (عدد الجراكن)' : `العدد الفعلي في المخزن (المسجل: ${stockTarget.remaining})`;
+    $('sQty').value = mode === 'add' ? '' : stockTarget.remaining; $('sNote').value = ''; $('stockErr').textContent = '';
+    openModal('stockModal'); setTimeout(() => $('sQty').select(), 50);
+}
+$('stockSave').onclick = async () => {
+    $('stockErr').textContent = ''; $('stockSave').disabled = true;
+    try {
+        if (stockMode === 'add') await api('restock', { id: stockTarget.id, qty: $('sQty').value, note: $('sNote').value });
+        else await api('adjust', { id: stockTarget.id, newStock: $('sQty').value, note: $('sNote').value });
+        $('stockModal').classList.remove('open'); toast('تم الحفظ ✅'); await loadAll();
+    } catch (e) { $('stockErr').textContent = e.message; }
+    $('stockSave').disabled = false;
+};
+
+/* ---------------- admins ---------------- */
+let adminTarget = null;
+function renderAdmins() {
+    $('adminRows').innerHTML = admins.map(a => `<tr>
+        <td><b>${esc(a.display_name || a.username)}</b>${me && a.id === me.id ? ' <span class="tag">أنت</span>' : ''}</td>
+        <td style="direction:ltr;text-align:right">${esc(a.username)}</td>
+        <td>${a.last_login ? dateStr(a.last_login) + ' ' + timeStr(a.last_login) : '—'}</td>
+        <td style="white-space:nowrap">
+            <button class="btn small" onclick="openAdmin(${a.id})"><i class="fas fa-key"></i> تغيير كلمة السر</button>
+            ${me && a.id === me.id ? '' : `<button class="btn small danger" onclick="delAdmin(${a.id})"><i class="fas fa-trash"></i></button>`}
+        </td></tr>`).join('');
+}
+$('newAdminBtn').onclick = () => openAdmin(null);
+function openAdmin(id) {
+    adminTarget = id ? admins.find(a => a.id === id) : null;
+    $('adminModalTitle').textContent = adminTarget ? 'كلمة سر جديدة — ' + (adminTarget.display_name || adminTarget.username) : 'مدير جديد';
+    $('adminNewFields').style.display = adminTarget ? 'none' : '';
+    $('aDisplay').value = ''; $('aUser').value = ''; $('aPass').value = ''; $('adminErr').textContent = '';
+    openModal('adminModal'); setTimeout(() => (adminTarget ? $('aPass') : $('aDisplay')).focus(), 50);
+}
+$('adminSave').onclick = async () => {
+    $('adminErr').textContent = ''; $('adminSave').disabled = true;
+    try {
+        if (adminTarget) await api('admin_password', { id: adminTarget.id, password: $('aPass').value });
+        else await api('admin_add', { username: $('aUser').value, display_name: $('aDisplay').value, password: $('aPass').value });
+        $('adminModal').classList.remove('open'); toast('تم الحفظ ✅'); await loadAll();
+    } catch (e) { $('adminErr').textContent = e.message; }
+    $('adminSave').disabled = false;
+};
+async function delAdmin(id) {
+    const a = admins.find(x => x.id === id);
+    if (!confirm('تمسح المدير ' + (a.display_name || a.username) + '؟')) return;
+    try { await api('admin_delete', { id }); toast('تم المسح'); await loadAll(); } catch (e) { toast(e.message, true); }
+}
+
+/* ---------------- Excel export (from day one until now) ---------------- */
+$('exportBtn').onclick = async () => {
+    $('exportBtn').disabled = true;
+    try {
+        await loadAll();   // make sure the file has the latest data
+        const wb = XLSX.utils.book_new();
+        wb.Workbook = { Views: [{ RTL: true }] };
+
+        const inv = [...invoices].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).map(r => ({
+            'التاريخ': r.created_at ? dayKey(r.created_at) : '',
+            'الوقت': r.created_at ? timeStr(r.created_at) : '',
+            'العميل': r.customer_name || '', 'التليفون': r.mobile_number || '', 'رقم السيارة': r.car_number || '',
+            'العداد القديم': r.current_km || '', 'العداد الجديد': r.next_km || '',
+            'خدمات الغسيل': r.wash_services || '', 'إجمالي الغسيل': Number(r.wash_total) || 0,
+            'خدمات الزيت': r.oil_services || '', 'إجمالي الزيت': Number(r.oil_total) || 0,
+            'خدمات السجاد': r.carpet_services || '', 'إجمالي السجاد': Number(r.carpet_total) || 0,
+            'الإجمالي': Number(r.total) || 0, 'طريقة الدفع': PAY[r.payment_method]?.label || 'غير محدد'
+        }));
+        add(wb, inv, 'الفواتير');
+
+        add(wb, [...dailyTotals].sort((a, b) => a.day < b.day ? -1 : 1).map(d => ({
+            'اليوم': d.day, 'عدد الفواتير': d.invoices_count, 'الإجمالي': Number(d.total),
+            'كاش': Number(d.cash), 'فيزا / كارت': Number(d.card), 'إنستاباي': Number(d.instapay),
+            'محفظة': Number(d.wallet), 'غير محدد': Number(d.unspecified)
+        })), 'إجمالي الأيام');
+
+        add(wb, oils.map(o => ({
+            'الزيت': o.name, 'السعر': o.price, 'رصيد أول': o.opening ?? '', 'اتضاف': o.added,
+            'اتباع': o.sold, 'تسوية': o.adjusted, 'المتبقي': o.remaining ?? 'محذوف'
+        })), 'جرد الزيوت');
+
+        add(wb, oilLog.map(l => ({
+            'التاريخ': dayKey(l.created_at), 'الوقت': timeStr(l.created_at), 'الزيت': l.product_name,
+            'النوع': l.type === 'add' ? 'إضافة' : 'تسوية جرد', 'الكمية': l.qty, 'ملاحظة': l.note || ''
+        })), 'حركة المخزن');
+
+        XLSX.writeFile(wb, `speed-car-care-${dayKey(Date.now())}.xlsx`);
+        toast('تم تصدير الملف');
+    } catch (e) { toast(e.message, true); }
+    $('exportBtn').disabled = false;
+};
+function add(wb, rows, name) {
+    const ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.aoa_to_sheet([['لا توجد بيانات']]);
+    if (rows.length) ws['!cols'] = Object.keys(rows[0]).map(k => ({ wch: Math.min(40, Math.max(k.length + 4, ...rows.slice(0, 200).map(r => String(r[k] ?? '').length + 2))) }));
+    XLSX.utils.book_append_sheet(wb, ws, name);
+}
+
+/* ---------------- boot ---------------- */
+if (token) api('ping').then(j => { me = j.user; start(); }).catch(() => logout(true)); else $('un').focus();
+</script>
+</body>
+</html>
