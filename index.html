@@ -1155,7 +1155,14 @@
                 wash_services: washNames,
                 oil_services: oilNames,
                 carpet_services: carpetNames,
-                total: total
+                total: total,
+                items: cart.map(i => ({
+                    name: i.name,
+                    category: i.category,
+                    quantity: i.quantity,
+                    price: i.price,
+                    stock_id: menuItems.find(m => m.id === i.id)?.stock_id ?? null
+                }))
             };
 
             const payload = {
