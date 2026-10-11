@@ -329,7 +329,11 @@ async function api(action, params = {}) {
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ action, ...params })
     });
-    let j; try { j = await r.json(); } catch { throw new Error('رد غير متوقع من السيرفر'); }
+    const raw = await r.text();
+    let j; try { j = JSON.parse(raw); } catch {
+        console.error('API', r.status, raw);
+        throw new Error('رد غير متوقع من السيرفر — كود ' + r.status);
+    }
     if (r.status === 401 && action !== 'login') { logout(true); throw new Error(j.error); }
     if (!j.success) throw new Error(j.error || 'حصل خطأ');
     return j;
