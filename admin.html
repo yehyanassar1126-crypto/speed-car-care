@@ -138,8 +138,11 @@ tfoot td{font-weight:900;background:var(--panel-2)}
     <div class="login-box">
         <img src="logo.png" alt="Speed Car Care">
         <h1>لوحة الإدارة</h1>
+        <label class="field"><span>اسم المستخدم</span>
+            <input class="input" id="un" autocomplete="username" autocapitalize="none" dir="ltr">
+        </label>
         <label class="field"><span>كلمة السر</span>
-            <input class="input" type="password" id="pw" autocomplete="current-password">
+            <input class="input" type="password" id="pw" autocomplete="current-password" dir="ltr">
         </label>
         <button class="btn primary" style="width:100%" id="loginBtn">دخول</button>
         <div class="err" id="loginErr"></div>
@@ -150,6 +153,7 @@ tfoot td{font-weight:900;background:var(--panel-2)}
 <header class="top" id="topbar" hidden>
     <div class="brand"><i class="fas fa-car-wash"></i> Speed Car Care</div>
     <div class="spacer"></div>
+    <span id="whoami" style="color:var(--muted);font-size:.9rem"></span>
     <button class="btn small" id="refreshBtn"><i class="fas fa-rotate"></i> تحديث</button>
     <button class="btn small primary" id="exportBtn"><i class="fas fa-file-excel"></i> تصدير Excel</button>
     <button class="btn small" id="logoutBtn"><i class="fas fa-right-from-bracket"></i> خروج</button>
@@ -171,6 +175,7 @@ tfoot td{font-weight:900;background:var(--panel-2)}
         <button class="tab" data-tab="day"><i class="fas fa-calendar-day"></i> حساب اليوم</button>
         <button class="tab" data-tab="invoices"><i class="fas fa-file-invoice"></i> كل الفواتير</button>
         <button class="tab" data-tab="oil"><i class="fas fa-oil-can"></i> مخزن الزيت</button>
+        <button class="tab" data-tab="admins"><i class="fas fa-user-shield"></i> المديرين</button>
     </nav>
 
     <!-- REQUESTS -->
@@ -234,6 +239,20 @@ tfoot td{font-weight:900;background:var(--panel-2)}
             <b>تسوية</b> هي فرق الجرد اللي بتعمله بإيدك. <b>رصيد أول</b> محسوب = المتبقي − اتضاف − تسوية + اتباع.
         </p>
     </section>
+
+    <!-- ADMINS -->
+    <section class="pane" id="pane-admins">
+        <div class="toolbar">
+            <button class="btn primary" id="newAdminBtn"><i class="fas fa-user-plus"></i> مدير جديد</button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>آخر دخول</th><th></th></tr></thead>
+                <tbody id="adminRows"></tbody>
+            </table>
+        </div>
+        <p class="note">أي مدير يقدر يضيف أو يمسح مديرين تانيين ويغيّر كلمات السر. كلمات السر متخزنة مشفّرة ومحدش (حتى أنا) يقدر يشوفها. بعد 5 محاولات غلط الحساب بيتقفل 15 دقيقة.</p>
+    </section>
 </main>
 
 <!-- MODALS -->
@@ -261,6 +280,19 @@ tfoot td{font-weight:900;background:var(--panel-2)}
     </div>
 </div>
 
+<div class="modal-bg" id="adminModal">
+    <div class="modal">
+        <h3 id="adminModalTitle">مدير جديد</h3>
+        <div id="adminNewFields">
+            <label class="field"><span>الاسم (اختياري)</span><input class="input" id="aDisplay"></label>
+            <label class="field"><span>اسم المستخدم (إنجليزي)</span><input class="input" id="aUser" dir="ltr" autocapitalize="none"></label>
+        </div>
+        <label class="field"><span>كلمة السر (6 على الأقل)</span><input class="input" type="text" id="aPass" dir="ltr" autocomplete="off"></label>
+        <div class="err" id="adminErr"></div>
+        <div class="actions"><button class="btn primary" id="adminSave">حفظ</button><button class="btn" data-close>إلغاء</button></div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -272,7 +304,8 @@ const PAY = {
 };
 const TZ = 'Africa/Cairo';
 
-let pw = sessionStorage.getItem('scc_admin_pw') || '';
+let token = sessionStorage.getItem('scc_admin_token') || '';
+let me = null, admins = [];
 let pending = [], invoices = [], oils = [], oilLog = [], dailyTotals = [];
 let knownPendingIds = new Set(), firstPendingLoad = true;
 let pollTimer = null;
@@ -293,42 +326,44 @@ function toast(msg, bad) {
 async function api(action, params = {}) {
     const r = await fetch('/api/admin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': pw },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ action, ...params })
     });
     let j; try { j = await r.json(); } catch { throw new Error('رد غير متوقع من السيرفر'); }
-    if (r.status === 401) { logout(true); throw new Error(j.error); }
+    if (r.status === 401 && action !== 'login') { logout(true); throw new Error(j.error); }
     if (!j.success) throw new Error(j.error || 'حصل خطأ');
     return j;
 }
 
 /* ---------------- login ---------------- */
 async function login() {
-    pw = $('pw').value;
     $('loginErr').textContent = '';
     $('loginBtn').disabled = true;
     try {
-        await api('ping');
-        sessionStorage.setItem('scc_admin_pw', pw);
+        const j = await api('login', { username: $('un').value, password: $('pw').value });
+        token = j.token; me = j.user;
+        sessionStorage.setItem('scc_admin_token', token);
+        $('pw').value = '';
         start();
     } catch (e) { $('loginErr').textContent = e.message; }
     $('loginBtn').disabled = false;
 }
 function logout(silent) {
-    sessionStorage.removeItem('scc_admin_pw'); pw = '';
+    sessionStorage.removeItem('scc_admin_token'); token = ''; me = null;
     clearInterval(pollTimer);
     $('login').hidden = false; $('login').style.display = 'flex';
     $('topbar').hidden = true; $('app').hidden = true;
-    if (!silent) $('pw').value = '';
+    if (!silent) { $('pw').value = ''; $('un').value = ''; }
 }
 $('loginBtn').onclick = login;
-$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+['un', 'pw'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
 $('logoutBtn').onclick = () => logout(false);
 
 async function start() {
     $('login').style.display = 'none';
     $('topbar').hidden = false; $('app').hidden = false;
     $('dayPicker').value = dayKey(Date.now());
+    if (me) $('whoami').textContent = '👤 ' + (me.display_name || me.username);
     await loadAll();
     clearInterval(pollTimer);
     pollTimer = setInterval(loadPending, 15000);
@@ -336,8 +371,8 @@ async function start() {
 
 async function loadAll() {
     try {
-        const [p, i, o, d] = await Promise.all([api('pending'), api('invoices'), api('oil_report'), api('daily_totals')]);
-        pending = p.data; invoices = i.data; oils = o.data; oilLog = o.log; dailyTotals = d.data;
+        const [p, i, o, d, a] = await Promise.all([api('pending'), api('invoices'), api('oil_report'), api('daily_totals'), api('admins')]);
+        pending = p.data; invoices = i.data; oils = o.data; oilLog = o.log; dailyTotals = d.data; admins = a.data;
         notePending(); renderAll();
     } catch (e) { toast(e.message, true); }
 }
@@ -358,7 +393,7 @@ document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
 });
 
 /* ---------------- render ---------------- */
-function renderAll() { renderToday(); renderPending(); renderDay(); renderInvoices(); renderOil(); }
+function renderAll() { renderToday(); renderPending(); renderDay(); renderInvoices(); renderOil(); renderAdmins(); }
 
 function sumBy(list) {
     const s = { total: 0, count: list.length, cash: 0, card: 0, instapay: 0, wallet: 0, none: 0 };
@@ -548,6 +583,41 @@ $('stockSave').onclick = async () => {
     $('stockSave').disabled = false;
 };
 
+/* ---------------- admins ---------------- */
+let adminTarget = null;
+function renderAdmins() {
+    $('adminRows').innerHTML = admins.map(a => `<tr>
+        <td><b>${esc(a.display_name || a.username)}</b>${me && a.id === me.id ? ' <span class="tag">أنت</span>' : ''}</td>
+        <td style="direction:ltr;text-align:right">${esc(a.username)}</td>
+        <td>${a.last_login ? dateStr(a.last_login) + ' ' + timeStr(a.last_login) : '—'}</td>
+        <td style="white-space:nowrap">
+            <button class="btn small" onclick="openAdmin(${a.id})"><i class="fas fa-key"></i> تغيير كلمة السر</button>
+            ${me && a.id === me.id ? '' : `<button class="btn small danger" onclick="delAdmin(${a.id})"><i class="fas fa-trash"></i></button>`}
+        </td></tr>`).join('');
+}
+$('newAdminBtn').onclick = () => openAdmin(null);
+function openAdmin(id) {
+    adminTarget = id ? admins.find(a => a.id === id) : null;
+    $('adminModalTitle').textContent = adminTarget ? 'كلمة سر جديدة — ' + (adminTarget.display_name || adminTarget.username) : 'مدير جديد';
+    $('adminNewFields').style.display = adminTarget ? 'none' : '';
+    $('aDisplay').value = ''; $('aUser').value = ''; $('aPass').value = ''; $('adminErr').textContent = '';
+    openModal('adminModal'); setTimeout(() => (adminTarget ? $('aPass') : $('aDisplay')).focus(), 50);
+}
+$('adminSave').onclick = async () => {
+    $('adminErr').textContent = ''; $('adminSave').disabled = true;
+    try {
+        if (adminTarget) await api('admin_password', { id: adminTarget.id, password: $('aPass').value });
+        else await api('admin_add', { username: $('aUser').value, display_name: $('aDisplay').value, password: $('aPass').value });
+        $('adminModal').classList.remove('open'); toast('تم الحفظ ✅'); await loadAll();
+    } catch (e) { $('adminErr').textContent = e.message; }
+    $('adminSave').disabled = false;
+};
+async function delAdmin(id) {
+    const a = admins.find(x => x.id === id);
+    if (!confirm('تمسح المدير ' + (a.display_name || a.username) + '؟')) return;
+    try { await api('admin_delete', { id }); toast('تم المسح'); await loadAll(); } catch (e) { toast(e.message, true); }
+}
+
 /* ---------------- Excel export (from day one until now) ---------------- */
 $('exportBtn').onclick = async () => {
     $('exportBtn').disabled = true;
@@ -596,7 +666,7 @@ function add(wb, rows, name) {
 }
 
 /* ---------------- boot ---------------- */
-if (pw) api('ping').then(start).catch(() => logout(true)); else $('pw').focus();
+if (token) api('ping').then(j => { me = j.user; start(); }).catch(() => logout(true)); else $('un').focus();
 </script>
 </body>
 </html>
