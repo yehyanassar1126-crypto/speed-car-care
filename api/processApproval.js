@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { approvePending, rejectPending } from './_approval.js';
 
+// Kept for the approve / reject links sent to the owner on WhatsApp.
+// (The dashboard at /admin.html does the same thing and also records the payment method.)
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).send('Method Not Allowed');
 
@@ -7,64 +10,23 @@ export default async function handler(req, res) {
     if (!id || !action) return res.status(400).send('Missing ID or Action parameter.');
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
     try {
-        // Fetch the staged record
-        const { data: pendingRecord, error: fetchError } = await supabase
-            .from('pending_invoices')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const result = action === 'approve'
+            ? await approvePending(supabase, id)
+            : await rejectPending(supabase, id);
 
-        if (fetchError || !pendingRecord) {
+        if (result.notFound) {
             return res.status(404).send('<h1 style="color:red; text-align:center;">Record not found or already processed.</h1>');
         }
-
-        if (action === 'approve') {
-            const { invoice_data: invoiceData, points_data: points } = pendingRecord;
-
-            // Commit to permanent tables
-            const { error: invError } = await supabase.from('invoices').insert([invoiceData]);
-            if (invError) {
-                console.error('invoices insert error:', invError);
-            }
-
-            const { error: dailyError } = await supabase.from('daily_invoices').insert([invoiceData]);
-            if (dailyError) {
-                console.error('daily_invoices insert error:', dailyError);
-            }
-
-            // Update loyalty points
-            const { data: existingCustomer } = await supabase
-                .from('customer_points')
-                .select('*')
-                .eq('customer_name', invoiceData.customer_name)
-                .single();
-
-            if (existingCustomer) {
-                await supabase.from('customer_points').update({
-                    wash_points: existingCustomer.wash_points + (points.wash || 0),
-                    oil_points: existingCustomer.oil_points + (points.oil || 0),
-                    carpet_points: existingCustomer.carpet_points + (points.carpet || 0)
-                }).eq('customer_name', invoiceData.customer_name);
-            } else {
-                await supabase.from('customer_points').insert([{
-                    customer_name: invoiceData.customer_name,
-                    wash_points: points.wash || 0,
-                    oil_points: points.oil || 0,
-                    carpet_points: points.carpet || 0
-                }]);
-            }
+        if (!result.ok) {
+            return res.status(500).send('Error: ' + result.error);
         }
 
-        // Hard delete the record from pending_invoices regardless of approval or rejection
-        await supabase.from('pending_invoices').delete().eq('id', id);
-
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         const message = action === 'approve'
             ? '<h1 style="color:green; text-align:center; font-family: sans-serif; margin-top:50px;">✅ تم تأكيد وحفظ الفاتورة بنجاح</h1>'
             : '<h1 style="color:red; text-align:center; font-family: sans-serif; margin-top:50px;">❌ تم رفض ومسح الفاتورة</h1>';
-
         return res.status(200).send(message);
 
     } catch (error) {
