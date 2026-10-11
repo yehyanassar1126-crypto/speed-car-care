@@ -47,10 +47,22 @@ function parseOilServices(text) {
     });
 }
 
+// Which role is the configured Supabase key? (JWT keys carry it; new sb_secret_ keys don't)
+function keyRole() {
+    const k = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    if (k.startsWith('sb_secret_')) return 'service_role';
+    if (k.startsWith('sb_publishable_')) return 'anon';
+    try { return JSON.parse(Buffer.from(k.split('.')[1], 'base64url').toString()).role || null; } catch { return null; }
+}
+
 const toInt = v => Math.trunc(Number(v));
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({ success: false, error: 'متغيرات SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY ناقصة في Vercel (وبعد إضافتها اعمل Redeploy)' });
+    }
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const body = req.body || {};
@@ -71,6 +83,12 @@ export default async function handler(req, res) {
             const token = signToken({ uid: data.id, exp: Date.now() + TOKEN_TTL_MS });
             return res.json({ success: true, token, user: { id: data.id, username: data.username, display_name: data.display_name } });
         } catch (e) {
+            const role = keyRole();
+            if (/permission denied/i.test(e.message) && role !== 'service_role') {
+                return res.status(500).json({ success: false, error:
+                    'المفتاح SUPABASE_SERVICE_ROLE_KEY في Vercel هو مفتاح "' + (role || 'غير معروف') +
+                    '" مش service_role. خد مفتاح service_role من Supabase ← Project Settings ← API وحطه في Vercel ثم Redeploy.' });
+            }
             return res.status(500).json({ success: false, error: e.message });
         }
     }
