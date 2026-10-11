@@ -106,6 +106,8 @@ export default async function handler(req, res) {
             '',
             `💰 *الإجمالي: ${invoiceData.total} ج.م*`,
             '',
+            `📋 لوحة الطلبات (اختيار طريقة الدفع): ${protocol}://${host}/admin.html`,
+            '',
             `✅ موافقة: ${approveUrl}`,
             `❌ رفض: ${rejectUrl}`
         );
