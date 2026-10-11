@@ -3,15 +3,27 @@ import crypto from 'node:crypto';
 import { approvePending, rejectPending, PAYMENT_METHODS } from './_approval.js';
 
 // One endpoint for the whole dashboard:  POST /api/admin  { action, ...params }
-// Protected by the ADMIN_PASSWORD environment variable (set it in Vercel).
+// Admins live in the `admin_users` table (bcrypt-hashed passwords, see sql/admin_migration.sql).
+// Login returns a signed token (12h) that the page sends as  Authorization: Bearer <token>.
+// The signing key is derived from SUPABASE_SERVICE_ROLE_KEY, so no extra env var is needed.
 
-function sha(s) { return crypto.createHash('sha256').update(String(s)).digest(); }
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
+const signKey = () => crypto.createHmac('sha256', 'scc-admin-v1').update(process.env.SUPABASE_SERVICE_ROLE_KEY || '').digest();
+const mac = b64 => crypto.createHmac('sha256', signKey()).update(b64).digest('base64url');
 
-function authorized(req) {
-    const expected = process.env.ADMIN_PASSWORD;
-    if (!expected) return 'not_configured';
-    const given = req.headers['x-admin-password'] || '';
-    return crypto.timingSafeEqual(sha(given), sha(expected)) ? true : false;
+function signToken(payload) {
+    const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    return b64 + '.' + mac(b64);
+}
+function readToken(token) {
+    const [b64, sig] = String(token || '').split('.');
+    if (!b64 || !sig) return null;
+    const a = Buffer.from(sig), b = Buffer.from(mac(b64));
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    try {
+        const p = JSON.parse(Buffer.from(b64, 'base64url').toString());
+        return p.exp > Date.now() ? p : null;
+    } catch { return null; }
 }
 
 // Supabase returns max 1000 rows per request, so read in pages.
@@ -40,20 +52,86 @@ const toInt = v => Math.trunc(Number(v));
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method Not Allowed' });
 
-    const auth = authorized(req);
-    if (auth === 'not_configured') {
-        return res.status(500).json({ success: false, error: 'ADMIN_PASSWORD غير مضبوط في إعدادات Vercel' });
-    }
-    if (!auth) return res.status(401).json({ success: false, error: 'كلمة السر غير صحيحة' });
-
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     const body = req.body || {};
+
+    // ---- login (the only action that does not need a token) ----
+    if (body.action === 'login') {
+        try {
+            const { data, error } = await supabase.rpc('admin_login', {
+                p_username: String(body.username || ''), p_password: String(body.password || '')
+            });
+            if (error) throw error;
+            if (!data?.ok) {
+                return res.status(401).json({
+                    success: false,
+                    error: data?.locked ? 'الحساب اتقفل 15 دقيقة بسبب محاولات غلط كتير' : 'اسم المستخدم أو كلمة السر غير صحيحة'
+                });
+            }
+            const token = signToken({ uid: data.id, exp: Date.now() + TOKEN_TTL_MS });
+            return res.json({ success: true, token, user: { id: data.id, username: data.username, display_name: data.display_name } });
+        } catch (e) {
+            return res.status(500).json({ success: false, error: e.message });
+        }
+    }
+
+    // ---- everything else needs a valid token of an admin that still exists ----
+    const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    const session = readToken(bearer);
+    let me = null;
+    if (session) {
+        const { data } = await supabase.from('admin_users').select('id, username, display_name').eq('id', session.uid).maybeSingle();
+        me = data;
+    }
+    if (!me) return res.status(401).json({ success: false, error: 'سجّل دخول تاني' });
 
     try {
         switch (body.action) {
 
             case 'ping':
+                return res.json({ success: true, user: me });
+
+            // ---------------- Admins ----------------
+            case 'admins': {
+                const { data, error } = await supabase.from('admin_users')
+                    .select('id, username, display_name, last_login, created_at').order('id', { ascending: true });
+                if (error) throw error;
+                return res.json({ success: true, data, me_id: me.id });
+            }
+
+            case 'admin_add': {
+                const username = String(body.username || '').trim();
+                const password = String(body.password || '');
+                if (!/^[A-Za-z0-9_.-]{3,30}$/.test(username)) {
+                    return res.status(400).json({ success: false, error: 'اسم المستخدم: 3 إلى 30 حرف إنجليزي أو أرقام (_ . - مسموحين)' });
+                }
+                if (password.length < 6) return res.status(400).json({ success: false, error: 'كلمة السر لازم تكون 6 حروف أو أرقام على الأقل' });
+                const { error } = await supabase.rpc('admin_create', {
+                    p_username: username, p_password: password, p_display: String(body.display_name || '')
+                });
+                if (error) {
+                    const dup = /duplicate|unique/i.test(error.message);
+                    return res.status(dup ? 400 : 500).json({ success: false, error: dup ? 'اسم المستخدم ده موجود بالفعل' : error.message });
+                }
                 return res.json({ success: true });
+            }
+
+            case 'admin_password': {
+                const password = String(body.password || '');
+                if (password.length < 6) return res.status(400).json({ success: false, error: 'كلمة السر لازم تكون 6 حروف أو أرقام على الأقل' });
+                const { error } = await supabase.rpc('admin_set_password', { p_id: body.id, p_password: password });
+                if (error) throw error;
+                return res.json({ success: true });
+            }
+
+            case 'admin_delete': {
+                if (String(body.id) === String(me.id)) return res.status(400).json({ success: false, error: 'مينفعش تمسح حسابك اللي داخل بيه' });
+                const { count } = await supabase.from('admin_users').select('id', { count: 'exact', head: true });
+                if ((count || 0) <= 1) return res.status(400).json({ success: false, error: 'لازم يفضل مدير واحد على الأقل' });
+                const { error } = await supabase.from('admin_users').delete().eq('id', body.id);
+                if (error) throw error;
+                return res.json({ success: true });
+            }
 
             // ---------------- Requests ----------------
             case 'pending': {
