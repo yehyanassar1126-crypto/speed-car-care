@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-const SibApiV3Sdk = require('@getbrevo/brevo');
+import { sendWhatsApp } from './_whatsapp.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
@@ -79,64 +79,45 @@ export default async function handler(req, res) {
         }
 
         // ============================================================
-        // STEP 4: Send email with all details
+        // STEP 4: Send the customer details to the owner on WhatsApp
         // ============================================================
         const host = req.headers.host;
         const protocol = host.includes('localhost') ? 'http' : 'https';
         const approveUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=approve`;
         const rejectUrl = `${protocol}://${host}/api/processApproval?id=${pendingId}&action=reject`;
 
-        let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-        let apiKey = apiInstance.authentications['apiKey'];
-        apiKey.apiKey = process.env.BREVO_API_KEY;
+        const lines = [
+            '*Speed Car Care - فاتورة جديدة* 🚗',
+            '',
+            `👤 العميل: ${invoiceData.customer_name || 'غير محدد'}`,
+            `📞 التليفون: ${invoiceData.mobile_number || 'غير محدد'}`,
+            `🚘 رقم العربية: ${invoiceData.car_number || 'غير محدد'}`
+        ];
+        if (invoiceData.current_km) lines.push(`🔢 العداد القديم: ${invoiceData.current_km}`);
+        if (invoiceData.next_km) lines.push(`🔢 العداد الجديد: ${invoiceData.next_km}`);
 
-        let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-        sendSmtpEmail.sender = { "name": "Speed Car Care", "email": "nassaryehya26@gmail.com" };
-        sendSmtpEmail.to = [{ "email": "nassaryehya26@gmail.com" }];
-        sendSmtpEmail.subject = `Invoice Approval Required: ${invoiceData.customer_name} - ${invoiceData.total} EGP`;
+        lines.push('', '*تفاصيل الخدمات:*');
+        if (invoiceData.wash_services) lines.push(`🚿 الغسيل: ${invoiceData.wash_services} (${invoiceData.wash_total} ج.م)`);
+        if (invoiceData.oil_services) lines.push(`🛢️ الزيت: ${invoiceData.oil_services} (${invoiceData.oil_total} ج.م)`);
+        if (invoiceData.carpet_services) lines.push(`🪑 السجاد: ${invoiceData.carpet_services} (${invoiceData.carpet_total} ج.م)`);
+        if (carpetCode) lines.push(`🔑 كود السجاد: ${carpetCode}`);
 
-        // Build service details sections
-        let servicesHtml = '';
-        if (invoiceData.wash_services) {
-            servicesHtml += `<p><strong>الغسيل:</strong> ${invoiceData.wash_services} (${invoiceData.wash_total} ج.م)</p>`;
+        lines.push(
+            '',
+            `💰 *الإجمالي: ${invoiceData.total} ج.م*`,
+            '',
+            `✅ موافقة: ${approveUrl}`,
+            `❌ رفض: ${rejectUrl}`
+        );
+
+        // A WhatsApp failure must not break the customer's order (it is already saved as pending).
+        let notified = true;
+        try {
+            await sendWhatsApp(lines.join('\n'));
+        } catch (waError) {
+            notified = false;
+            console.error('WhatsApp notification failed:', waError.message);
         }
-        if (invoiceData.oil_services) {
-            servicesHtml += `<p><strong>الزيت:</strong> ${invoiceData.oil_services} (${invoiceData.oil_total} ج.م)</p>`;
-        }
-        if (invoiceData.carpet_services) {
-            servicesHtml += `<p><strong>السجاد:</strong> ${invoiceData.carpet_services} (${invoiceData.carpet_total} ج.م)</p>`;
-        }
-
-        let carpetCodeHtml = '';
-        if (carpetCode) {
-            carpetCodeHtml = `<p style="font-size: 16px;"><strong>🪑 كود السجاد:</strong> ${carpetCode}</p>`;
-        }
-
-        sendSmtpEmail.htmlContent = `
-            <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right; background-color: #1a1a2e; padding: 30px; border-radius: 10px; color: #eaeaea;">
-                <h2 style="color: #e94560; text-align: center;">Speed Car Care - فاتورة جديدة</h2>
-                
-                <p><strong>اسم العميل:</strong> ${invoiceData.customer_name || 'غير محدد'}</p>
-                <p><strong>رقم التليفون:</strong> ${invoiceData.mobile_number || 'غير محدد'}</p>
-                <p><strong>رقم العربية:</strong> ${invoiceData.car_number || 'غير محدد'}</p>
-                ${invoiceData.current_km ? `<p><strong>العداد القديم:</strong> ${invoiceData.current_km}</p>` : ''}
-                ${invoiceData.next_km ? `<p><strong>العداد الجديد:</strong> ${invoiceData.next_km}</p>` : ''}
-                
-                <hr style="border-top: 1px solid #444;">
-                <p style="font-weight: bold;">تفاصيل الخدمات:</p>
-                ${servicesHtml}
-                ${carpetCodeHtml}
-                
-                <hr style="border-top: 1px solid #444;">
-                <p style="color: #e94560; font-size: 18px; text-align: center;"><strong>الإجمالي: ${invoiceData.total} ج.م</strong></p>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <a href="${approveUrl}" style="background-color: #28a745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-left: 10px; font-size: 16px;">موافقة</a>
-                    <a href="${rejectUrl}" style="background-color: #dc3545; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">رفض</a>
-                </div>
-            </div>`;
-
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
 
         // ============================================================
         // STEP 5: Return success
@@ -145,7 +126,8 @@ export default async function handler(req, res) {
             success: true,
             washQueueNumber, oilQueueNumber, carpetQueueNumber,
             hasWash, hasOil, hasCarpet,
-            carpetCode
+            carpetCode,
+            notified
         });
 
     } catch (error) {
