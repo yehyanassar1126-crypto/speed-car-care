@@ -630,11 +630,35 @@
             <button class="cat-tab active" onclick="filterCategory('all', this)">
                 <i class="fas fa-th"></i> <span>الكل</span>
             </button>
-            <button class="cat-tab" onclick="filterCategory('wash', this)">
-                <i class="fas fa-shower"></i> <span>غسيل</span>
+            <button class="cat-tab" onclick="filterCategory('شيل', this)">
+                <i class="fas fa-gas-pump"></i> <span>شيل (Shell)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('التعاون', this)">
+                <i class="fas fa-gas-pump"></i> <span>التعاون (Misr)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('موبيل', this)">
+                <i class="fas fa-gas-pump"></i> <span>موبيل (Mobil)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('توتال', this)">
+                <i class="fas fa-gas-pump"></i> <span>توتال (Total)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('كاسترول', this)">
+                <i class="fas fa-gas-pump"></i> <span>كاسترول (Castrol)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('مانول', this)">
+                <i class="fas fa-gas-pump"></i> <span>مانول (Mannol)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('موتول', this)">
+                <i class="fas fa-motorcycle"></i> <span>موتول (Motul)</span>
             </button>
             <button class="cat-tab" onclick="filterCategory('oil', this)">
-                <i class="fas fa-oil-can"></i> <span>زيت</span>
+                <i class="fas fa-oil-can"></i> <span>كل الزيوت</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('filter', this)">
+                <i class="fas fa-filter"></i> <span>فلاتر</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('wash', this)">
+                <i class="fas fa-shower"></i> <span>غسيل</span>
             </button>
             <button class="cat-tab" onclick="filterCategory('carpet', this)">
                 <i class="fas fa-chair"></i> <span>سجاد</span>
@@ -792,7 +816,16 @@
         const categoryIcons = {
             wash: 'fa-shower',
             oil: 'fa-oil-can',
-            carpet: 'fa-chair'
+            carpet: 'fa-chair',
+            filter: 'fa-filter',
+            'شيل': 'fa-gas-pump',
+            'التعاون': 'fa-gas-pump',
+            'موبيل': 'fa-gas-pump',
+            'توتال': 'fa-gas-pump',
+            'كاسترول': 'fa-gas-pump',
+            'مانول': 'fa-gas-pump',
+            'موتول': 'fa-motorcycle',
+            'فلاتر': 'fa-filter'
         };
 
         // Initial loading screen removal
@@ -829,6 +862,78 @@
             ];
         }
 
+        const SUPABASE_STORAGE_URL = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/';
+
+        const productImagesMap = {
+            // شيل (Shell)
+            1: '645635_main.jpg',
+            2: 'IMG_5b40dc31-4a0f-4ca3-8df4-257381fe3ee1.jpg',
+            3: 'IMG_0a5cad68-7e2c-4a5d-aa81-428106a4040c.jpg',
+            4: 'IMG_e42110ca-4c79-4868-ada0-f5b5807222a2.jpg',
+            5: 'IMG_28f72945-30db-4fbb-9ba8-95d17ad43a81.jpg',
+            // موبيل (Mobil)
+            6: 'IMG_2587c9b9-c8db-4129-add3-cf6a3ad41b80.jpg',
+            7: 'f132798293151208163058-1.webp',
+            8: '1.jpg',
+            9: 'IMG_0df919b9-ac34-4a02-b5d5-2b00ac3373b5.jpg',
+            10: 'IMG_4f4a49cd-a0a9-4a6c-b9ce-81248e356f90.jpg',
+            11: 'IMG_4291826e-8b07-498d-9f39-a5611f27e4bd.png',
+            12: 'IMG_3c630c34-6328-4ae3-893c-4cbdf8774c46.jpg',
+            13: 'IMG_ec2e467d-5616-46fd-874e-8bffdcff6d84.jpg',
+            14: 'IMG_5c9c4fe9-8367-4709-9ce0-2d4d6fc6cc84.jpg',
+            15: 'IMG_45048d2f-2020-4a97-a328-af89e39490c6.jpg',
+            37: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
+            38: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
+            39: 'IMG_16979631-2a7f-4875-b6ec-06e195ea353c.jpg',
+            40: 'IMG_ecca3ac3-5984-4ed1-9cf4-addf8ad0a45a.jpg',
+            // توتال (Total)
+            16: 'IMG_20261015_235732_0600_92098097.jpg',
+            17: 'IMG_20261015_235732_0600_92098097.jpg',
+            18: 'IMG_20261015_235732_0372_92098097.jpg',
+            19: 'IMG_20261015_235731_0738_92098106.jpg',
+            20: 'IMG_20261015_235731_0738_92098106.jpg',
+            21: 'IMG_20261015_235731_0788_92098106.jpg',
+            22: 'file_00000000f44481f48628af296bbd9bb4.png',
+            41: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
+            42: 'IMG_16979631-2a7f-4875-b6ec-06e195ea353c.jpg',
+            // مانول (Mannol)
+            23: 'IMG_20261015_235800_0525_92098048.jpg',
+            24: 'IMG_20261015_235800_0525_92098048.jpg',
+            25: 'IMG_20261015_235800_0298_92098048.jpg',
+            26: 'IMG_20261015_235800_0298_92098048.jpg',
+            27: 'IMG_20261015_235800_0298_92098048.jpg',
+            // كاسترول (Castrol)
+            28: 'IMG_20261015_235740_0822_92098075.jpg',
+            29: 'IMG_20261015_235741_0252_92098087.jpg',
+            30: 'IMG_20261015_235741_0068_92098087.jpg',
+            // التعاون (Al Taawon / Misr)
+            31: 'IMG_20261015_235752_0221.jpg',
+            32: 'IMG_20261015_235732_0606_92098097.jpg',
+            33: 'IMG_20261015_235751_0720_92098066.jpg',
+            34: 'IMG_20261015_235732_0610_92098097.jpg',
+            35: 'IMG_20261015_235731_0824_92098106.jpg',
+            36: 'IMG_20261015_235732_0387_92098097.jpg',
+            // باكم وباور
+            43: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg',
+            44: 'IMG_44be9a5e-9af2-4162-b7ca-10786ccc4950.png',
+            45: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg'
+        };
+
+        function detectProductBrand(name, dbBrand) {
+            if (dbBrand && dbBrand !== 'أخرى') return dbBrand;
+            const n = name || '';
+            if (n.includes('شيل') || n.includes('شل')) return 'شيل';
+            if (n.includes('التعاون')) return 'التعاون';
+            if (n.includes('موبيل')) return 'موبيل';
+            if (n.includes('توتال')) return 'توتال';
+            if (n.includes('كاسترول')) return 'كاسترول';
+            if (n.includes('مانول')) return 'مانول';
+            if (n.includes('موتول')) return 'موتول';
+            if (n.includes('فلتر')) return 'فلاتر';
+            if (n.includes('باكم') || n.includes('باور')) return 'باكم وباور';
+            return 'أخرى';
+        }
+
         async function loadMenu() {
             let tempMenuItems = getStaticMenuItems();
             
@@ -837,17 +942,29 @@
                 const result = await response.json();
                 
                 if (result.success && result.data) {
-                    const dbOils = result.data.map(p => ({
-                        id: 'oil_' + p.id,
-                        stock_id: p.id,
-                        name: p.name,
-                        price: parseFloat(p.price) || 0,
-                        category: 'oil',
-                        image_url: 'images/oils.jpg',
-                        stock: Number(p.stock) || 0,
-                        max_kilometers: Number(p.max_kilometers) || 0,
-                        is_popular: false
-                    }));
+                    const dbOils = result.data.map(p => {
+                        const brand = detectProductBrand(p.name, p.brand);
+                        const isFilter = brand === 'فلاتر' || p.category === 'filter' || (p.name && p.name.includes('فلتر'));
+                        const category = isFilter ? 'filter' : (p.category || 'oil');
+
+                        const mappedFilename = productImagesMap[p.id] || (p.image_url ? p.image_url.split('/').pop() : 'oils.jpg');
+                        // Use Supabase Storage URL first, with filename fallback
+                        const imageUrl = p.image_url || (SUPABASE_STORAGE_URL + mappedFilename);
+
+                        return {
+                            id: 'oil_' + p.id,
+                            stock_id: p.id,
+                            name: p.name,
+                            price: parseFloat(p.price) || 0,
+                            category: category,
+                            brand: brand,
+                            image_url: imageUrl,
+                            local_image: mappedFilename,
+                            stock: Number(p.stock) || 0,
+                            max_kilometers: Number(p.max_kilometers) || 0,
+                            is_popular: false
+                        };
+                    });
                     tempMenuItems = tempMenuItems.concat(dbOils);
                 }
             } catch(e) { 
@@ -864,7 +981,31 @@
             document.querySelectorAll('.cat-tab').forEach(btn => btn.classList.remove('active'));
             if(btnElement) btnElement.classList.add('active');
 
-            const filtered = category === 'all' ? menuItems : menuItems.filter(i => i.category === category);
+            let filtered = menuItems;
+            if (category === 'all') {
+                filtered = menuItems;
+            } else if (category === 'wash' || category === 'carpet') {
+                filtered = menuItems.filter(i => i.category === category);
+            } else if (category === 'oil') {
+                filtered = menuItems.filter(i => i.category === 'oil');
+            } else if (category === 'filter') {
+                filtered = menuItems.filter(i => i.category === 'filter' || i.brand === 'فلاتر' || (i.name && i.name.includes('فلتر')));
+            } else {
+                // فلترة مخصصة حسب ماركة الزيت (شيل، التعاون، موبيل، توتال، كاسترول، مانول، موتول...)
+                filtered = menuItems.filter(i => {
+                    const b = i.brand || '';
+                    const n = i.name || '';
+                    if (category === 'شيل') return b === 'شيل' || n.includes('شيل') || n.includes('شل');
+                    if (category === 'التعاون') return b === 'التعاون' || n.includes('التعاون');
+                    if (category === 'موبيل') return b === 'موبيل' || n.includes('موبيل');
+                    if (category === 'توتال') return b === 'توتال' || n.includes('توتال');
+                    if (category === 'كاسترول') return b === 'كاسترول' || n.includes('كاسترول');
+                    if (category === 'مانول') return b === 'مانول' || n.includes('مانول');
+                    if (category === 'موتول') return b === 'موتول' || n.includes('موتول');
+                    return b === category || n.includes(category);
+                });
+            }
+
             renderMenu(filtered);
         }
 
@@ -872,12 +1013,12 @@
             const grid = document.getElementById('menuGrid');
             
             if (!items || items.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 2rem;">لا توجد خدمات متاحة.</div>`;
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 2rem;">لا توجد منتجات أو خدمات متاحة في هذا القسم حالياً.</div>`;
                 return;
             }
 
             grid.innerHTML = items.map(item => {
-                const icon = categoryIcons[item.category];
+                const icon = categoryIcons[item.brand] || categoryIcons[item.category] || 'fa-oil-can';
                 const unit = item.unit ? ` <span style="font-size:0.65rem;">${item.unit}</span>` : '';
                 const stockWarning = item.category === 'oil' && item.stock <= 1 && item.stock > 0 ? `<div style="color:var(--gold); font-size:0.8rem; margin-bottom:5px;">⚠️ فاضل جركن واحد</div>` : '';
                 const noStock = item.category === 'oil' && item.stock <= 0 ? `<div style="color:red; font-size:0.8rem; margin-bottom:5px;">❌ خلصان من المخزن</div>` : '';
@@ -890,7 +1031,8 @@
                     <div class="menu-card" id="card-${item.id}" ${isOutOfStock ? 'style="opacity: 0.6;"' : ''}>
                         <div class="menu-card-img">
                             ${item.is_popular ? `<div class="popular-tag">⭐ الأكثر طلباً</div>` : ''}
-                            <img src="${item.image_url}" alt="${item.name}">
+                            <img src="${item.image_url}" alt="${item.name}" 
+                                 onerror="if(!this.dataset.fallback){this.dataset.fallback='1'; this.src='images/oil-products/' + (this.alt ? '${item.local_image || 'oils.jpg'}' : 'oils.jpg');} else {this.src='images/oils.jpg';}">
                         </div>
                         <div class="menu-card-body">
                             <div class="menu-card-name">${item.name}</div>
