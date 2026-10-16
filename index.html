@@ -572,6 +572,76 @@
             .menu-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
             .form-row { grid-template-columns: 1fr; }
         }
+
+        /* Payment Methods */
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        .payment-method-card {
+            cursor: pointer;
+            position: relative;
+        }
+        .payment-method-card input[type="radio"] {
+            display: none;
+        }
+        .payment-method-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 1rem 0.5rem;
+            border-radius: var(--radius-md);
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+            transition: all 0.3s ease;
+        }
+        .payment-method-card:hover .payment-method-content {
+            border-color: var(--gold);
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-2px);
+        }
+        .payment-method-card input[type="radio"]:checked + .payment-method-content {
+            border-color: var(--gold);
+            background: rgba(212,175,55,0.12);
+            box-shadow: 0 0 15px rgba(212,175,55,0.2);
+        }
+        .payment-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #fff;
+        }
+        .payment-name {
+            color: var(--cream);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .payment-desc {
+            color: var(--cream-dark);
+            font-size: 0.75rem;
+        }
+        @media (max-width: 480px) {
+            .payment-methods-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            .payment-method-content {
+                padding: 0.75rem 0.3rem;
+            }
+            .payment-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+            .payment-name { font-size: 0.8rem; }
+            .payment-desc { font-size: 0.65rem; }
+        }
     </style>
 </head>
 
@@ -809,6 +879,46 @@
                         <span style="color: var(--cream-dark); font-weight:bold;">قيمة الفاتورة المطلوبة</span>
                         <span style="font-size: 1.6rem; font-weight: 900; color: var(--gold);" id="modalTotal">0 ج.م</span>
                     </div>
+                </div>
+
+                <!-- Payment Method Selection -->
+                <div class="payment-methods-section" style="margin-top: 1rem;">
+                    <label style="color: var(--cream-dark); font-weight: bold; display: block; margin-bottom: 0.75rem;">
+                        <i class="fas fa-wallet"></i> طريقة الدفع (اختياري)
+                    </label>
+                    <div class="payment-methods-grid">
+                        <label class="payment-method-card" onclick="selectPaymentMethod('instapay')">
+                            <input type="radio" name="paymentMethod" value="instapay">
+                            <div class="payment-method-content">
+                                <div class="payment-icon" style="background: linear-gradient(135deg, #6C63FF, #4834d4);">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <span class="payment-name">InstaPay</span>
+                                <span class="payment-desc">تحويل فوري</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card" onclick="selectPaymentMethod('orange')">
+                            <input type="radio" name="paymentMethod" value="orange">
+                            <div class="payment-method-content">
+                                <div class="payment-icon" style="background: linear-gradient(135deg, #FF6B00, #FF8C00);">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <span class="payment-name">أورانج كاش</span>
+                                <span class="payment-desc">محفظة إلكترونية</span>
+                            </div>
+                        </label>
+                        <label class="payment-method-card" onclick="selectPaymentMethod('cash')">
+                            <input type="radio" name="paymentMethod" value="cash">
+                            <div class="payment-method-content">
+                                <div class="payment-icon" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <span class="payment-name">كاش</span>
+                                <span class="payment-desc">الدفع عند الاستلام</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div id="paymentNote" style="display:none; margin-top: 0.5rem; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.85rem; text-align: center;"></div>
                 </div>
 
                 <button class="submit-order-btn" id="submitOrderBtn" onclick="saveInvoice()">
@@ -1361,6 +1471,49 @@
 
         document.getElementById('oldKm').addEventListener('input', autoCalculateNextKm);
 
+        /* Payment Methods */
+        let selectedPaymentMethod = null;
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            const noteEl = document.getElementById('paymentNote');
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            if (method === 'instapay') {
+                noteEl.style.display = 'block';
+                noteEl.style.background = 'rgba(108,99,255,0.15)';
+                noteEl.style.color = '#b8b4ff';
+                noteEl.innerHTML = `<i class="fas fa-info-circle"></i> سيتم تحويلك لـ InstaPay لدفع <strong>${totalPrice.toFixed(2)} ج.م</strong> بعد حفظ الفاتورة`;
+            } else if (method === 'orange') {
+                noteEl.style.display = 'block';
+                noteEl.style.background = 'rgba(255,107,0,0.15)';
+                noteEl.style.color = '#ffb87a';
+                noteEl.innerHTML = `<i class="fas fa-info-circle"></i> سيتم فتح أورانج كاش لتحويل <strong>${totalPrice.toFixed(2)} ج.م</strong> على رقم <strong>0275606150</strong>`;
+            } else if (method === 'cash') {
+                noteEl.style.display = 'block';
+                noteEl.style.background = 'rgba(39,174,96,0.15)';
+                noteEl.style.color = '#7deca0';
+                noteEl.innerHTML = `<i class="fas fa-check-circle"></i> الدفع كاش عند الاستلام - <strong>${totalPrice.toFixed(2)} ج.م</strong>`;
+            }
+        }
+
+        function handlePaymentRedirect() {
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            if (selectedPaymentMethod === 'instapay') {
+                // Redirect to InstaPay link
+                window.open('https://ipn.eg/S/hima181993/instapay/4gRAXk', '_blank');
+            } else if (selectedPaymentMethod === 'orange') {
+                // Try to open Orange Cash app with the number
+                // Show instructions with the amount and number
+                const orangeMsg = `📱 أورانج كاش\n\nالمبلغ: ${totalPrice.toFixed(2)} ج.م\nالرقم: 0275606150\n\nافتح تطبيق أورانج كاش وحوّل المبلغ على الرقم ده`;
+                alert(orangeMsg);
+                // Try tel link to help copy/dial the number
+                window.open('tel:0275606150', '_self');
+            }
+            // cash = no redirect needed
+        }
+
         /* Save Invoice Logic to backend */
         async function saveInvoice() {
             const customerName = document.getElementById('orderName').value.trim();
@@ -1410,6 +1563,7 @@
                 oil_services: oilNames,
                 carpet_services: carpetNames,
                 total: total,
+                payment_method: selectedPaymentMethod || 'غير محدد',
                 items: cart.map(i => ({
                     name: i.name,
                     category: i.category,
@@ -1454,6 +1608,7 @@
                     }
 
                     alert(alertMessage);
+                    handlePaymentRedirect();
                     resetAll();
                     closeOrderModal();
                 } else {
@@ -1478,6 +1633,11 @@
             document.getElementById('carNumber').value = '';
             document.getElementById('oldKm').value = '';
             document.getElementById('newKm').value = '';
+            // Reset payment method
+            selectedPaymentMethod = null;
+            document.querySelectorAll('input[name="paymentMethod"]').forEach(r => r.checked = false);
+            const payNote = document.getElementById('paymentNote');
+            if (payNote) { payNote.style.display = 'none'; payNote.innerHTML = ''; }
             
             // Un-check visually added items
             document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
