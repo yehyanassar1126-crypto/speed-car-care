@@ -132,13 +132,21 @@ UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqae
 UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg' WHERE id = 45;
 
 -- ==============================================================================
--- 10. تحديث الماركة لقسم الفلاتر
+-- 10. تحديث الماركة وقسم الفلاتر بصور الفلاتر الحقيقية (زيت وهواء)
 -- ==============================================================================
+-- فلاتر الزيت
 UPDATE oil_products SET 
     brand = 'فلاتر', 
     category = 'filter',
-    image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/filter_default.png'
-WHERE id >= 46 AND id <= 76;
+    image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/oil_filter_generic.jpg'
+WHERE id IN (46, 47, 48, 63, 64, 65, 66, 67, 68, 69, 71, 72, 73, 74, 75, 76);
+
+-- فلاتر الهواء
+UPDATE oil_products SET 
+    brand = 'فلاتر', 
+    category = 'filter',
+    image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/air_filter_generic.jpg'
+WHERE id IN (49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 70);
 
 -- ==============================================================================
 -- 11. إضافة الأنواع والمنتجات الجديدة الموجودة في ملف الصور وغير مضافة سابقاً

@@ -916,7 +916,40 @@
             // باكم وباور
             43: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg',
             44: 'IMG_44be9a5e-9af2-4162-b7ca-10786ccc4950.png',
-            45: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg'
+            45: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg',
+            // فلاتر زيت (Oil Filters)
+            46: 'oil_filter_generic.jpg',
+            47: 'oil_filter_generic.jpg',
+            48: 'oil_filter_generic.jpg',
+            63: 'oil_filter_generic.jpg',
+            64: 'oil_filter_generic.jpg',
+            65: 'oil_filter_generic.jpg',
+            66: 'oil_filter_generic.jpg',
+            67: 'oil_filter_generic.jpg',
+            68: 'oil_filter_generic.jpg',
+            69: 'oil_filter_generic.jpg',
+            71: 'oil_filter_generic.jpg',
+            72: 'oil_filter_generic.jpg',
+            73: 'oil_filter_generic.jpg',
+            74: 'oil_filter_generic.jpg',
+            75: 'oil_filter_generic.jpg',
+            76: 'oil_filter_generic.jpg',
+            // فلاتر هواء (Air Filters)
+            49: 'air_filter_generic.jpg',
+            50: 'air_filter_generic.jpg',
+            51: 'air_filter_generic.jpg',
+            52: 'air_filter_generic.jpg',
+            53: 'air_filter_generic.jpg',
+            54: 'air_filter_generic.jpg',
+            55: 'air_filter_generic.jpg',
+            56: 'air_filter_generic.jpg',
+            57: 'air_filter_generic.jpg',
+            58: 'air_filter_generic.jpg',
+            59: 'air_filter_generic.jpg',
+            60: 'air_filter_generic.jpg',
+            61: 'air_filter_generic.jpg',
+            62: 'air_filter_generic.jpg',
+            70: 'air_filter_generic.jpg'
         };
 
         function detectProductBrand(name, dbBrand) {
@@ -947,9 +980,23 @@
                         const isFilter = brand === 'فلاتر' || p.category === 'filter' || (p.name && p.name.includes('فلتر'));
                         const category = isFilter ? 'filter' : (p.category || 'oil');
 
-                        const mappedFilename = productImagesMap[p.id] || (p.image_url ? p.image_url.split('/').pop() : 'oils.jpg');
+                        let mappedFilename = productImagesMap[p.id];
+                        if (!mappedFilename) {
+                            if (p.image_url && !p.image_url.includes('filter_default')) {
+                                mappedFilename = p.image_url.split('/').pop();
+                            } else if (p.name && p.name.includes('فلتر هواء')) {
+                                mappedFilename = 'air_filter_generic.jpg';
+                            } else if (p.name && p.name.includes('فلتر')) {
+                                mappedFilename = 'oil_filter_generic.jpg';
+                            } else {
+                                mappedFilename = 'oils.jpg';
+                            }
+                        }
+
                         // Use Supabase Storage URL first, with filename fallback
-                        const imageUrl = p.image_url || (SUPABASE_STORAGE_URL + mappedFilename);
+                        const imageUrl = p.image_url && !p.image_url.includes('filter_default') 
+                            ? p.image_url 
+                            : (SUPABASE_STORAGE_URL + mappedFilename);
 
                         return {
                             id: 'oil_' + p.id,
