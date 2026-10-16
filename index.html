@@ -884,7 +884,7 @@
                 <!-- Payment Method Selection -->
                 <div class="payment-methods-section" style="margin-top: 1rem;">
                     <label style="color: var(--cream-dark); font-weight: bold; display: block; margin-bottom: 0.75rem;">
-                        <i class="fas fa-wallet"></i> طريقة الدفع (اختياري)
+                        <i class="fas fa-wallet"></i> طريقة الدفع *
                     </label>
                     <div class="payment-methods-grid">
                         <label class="payment-method-card" onclick="selectPaymentMethod('instapay')">
@@ -1532,6 +1532,11 @@
                 return;
             }
 
+            if (!selectedPaymentMethod) {
+                alert('⚠️ يرجى اختيار طريقة الدفع');
+                return;
+            }
+
             const btn = document.getElementById('submitOrderBtn');
             btn.disabled = true;
             btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...`;
@@ -1563,7 +1568,7 @@
                 oil_services: oilNames,
                 carpet_services: carpetNames,
                 total: total,
-                payment_method: selectedPaymentMethod || 'غير محدد',
+                payment_method: selectedPaymentMethod,
                 items: cart.map(i => ({
                     name: i.name,
                     category: i.category,
