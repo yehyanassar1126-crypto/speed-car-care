@@ -127,9 +127,9 @@ UPDATE oil_products SET brand = 'التعاون', image_url = 'https://kqaexwzel
 -- ==============================================================================
 -- 9. تحديث سوائل الفرامل والباور (باكم / باور)
 -- ==============================================================================
-UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg' WHERE id = 43;
+UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/bendix_brake_fluid_small.jpg' WHERE id = 43;
 UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/IMG_44be9a5e-9af2-4162-b7ca-10786ccc4950.png' WHERE id = 44;
-UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg' WHERE id = 45;
+UPDATE oil_products SET brand = 'باكم وباور', image_url = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/bendix_brake_fluid_big.jpg' WHERE id = 45;
 
 -- ==============================================================================
 -- 10. تحديث الماركة وقسم الفلاتر بصور الفلاتر الحقيقية (زيت وهواء)
