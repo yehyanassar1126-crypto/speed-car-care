@@ -651,6 +651,21 @@
             <button class="cat-tab" onclick="filterCategory('موتول', this)">
                 <i class="fas fa-motorcycle"></i> <span>موتول (Motul)</span>
             </button>
+            <button class="cat-tab" onclick="filterCategory('هافولين', this)">
+                <i class="fas fa-gas-pump"></i> <span>هافولين (Havoline)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('ليكوي مولي', this)">
+                <i class="fas fa-gas-pump"></i> <span>ليكوي مولي (Liqui Moly)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('آيسين', this)">
+                <i class="fas fa-motorcycle"></i> <span>آيسين (Aisin)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('هانز', this)">
+                <i class="fas fa-gas-pump"></i> <span>هانز (Hanz)</span>
+            </button>
+            <button class="cat-tab" onclick="filterCategory('باكم وباور', this)">
+                <i class="fas fa-car-battery"></i> <span>باكم وباور</span>
+            </button>
             <button class="cat-tab" onclick="filterCategory('oil', this)">
                 <i class="fas fa-oil-can"></i> <span>كل الزيوت</span>
             </button>
@@ -865,59 +880,98 @@
         const SUPABASE_STORAGE_URL = 'https://kqaexwzelmdjyrimqvhu.supabase.co/storage/v1/object/public/products/';
 
         const productImagesMap = {
-            // شيل (Shell)
-            1: '645635_main.jpg',
-            2: 'IMG_5b40dc31-4a0f-4ca3-8df4-257381fe3ee1.jpg',
-            3: 'IMG_0a5cad68-7e2c-4a5d-aa81-428106a4040c.jpg',
-            4: 'IMG_e42110ca-4c79-4868-ada0-f5b5807222a2.jpg',
-            5: 'IMG_28f72945-30db-4fbb-9ba8-95d17ad43a81.jpg',
-            // موبيل (Mobil)
-            6: 'IMG_2587c9b9-c8db-4129-add3-cf6a3ad41b80.jpg',
-            7: 'f132798293151208163058-1.webp',
-            8: '1.jpg',
-            9: 'IMG_0df919b9-ac34-4a02-b5d5-2b00ac3373b5.jpg',
-            10: 'IMG_4f4a49cd-a0a9-4a6c-b9ce-81248e356f90.jpg',
-            11: 'IMG_4291826e-8b07-498d-9f39-a5611f27e4bd.png',
-            12: 'IMG_3c630c34-6328-4ae3-893c-4cbdf8774c46.jpg',
-            13: 'IMG_ec2e467d-5616-46fd-874e-8bffdcff6d84.jpg',
-            14: 'IMG_5c9c4fe9-8367-4709-9ce0-2d4d6fc6cc84.jpg',
-            15: 'IMG_45048d2f-2020-4a97-a328-af89e39490c6.jpg',
-            37: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
-            38: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
-            39: 'IMG_16979631-2a7f-4875-b6ec-06e195ea353c.jpg',
-            40: 'IMG_ecca3ac3-5984-4ed1-9cf4-addf8ad0a45a.jpg',
-            // توتال (Total)
-            16: 'IMG_20261015_235732_0600_92098097.jpg',
-            17: 'IMG_20261015_235732_0600_92098097.jpg',
-            18: 'IMG_20261015_235732_0372_92098097.jpg',
-            19: 'IMG_20261015_235731_0738_92098106.jpg',
-            20: 'IMG_20261015_235731_0738_92098106.jpg',
-            21: 'IMG_20261015_235731_0788_92098106.jpg',
-            22: 'file_00000000f44481f48628af296bbd9bb4.png',
-            41: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',
-            42: 'IMG_16979631-2a7f-4875-b6ec-06e195ea353c.jpg',
-            // مانول (Mannol)
-            23: 'IMG_20261015_235800_0525_92098048.jpg',
-            24: 'IMG_20261015_235800_0525_92098048.jpg',
-            25: 'IMG_20261015_235800_0298_92098048.jpg',
-            26: 'IMG_20261015_235800_0298_92098048.jpg',
-            27: 'IMG_20261015_235800_0298_92098048.jpg',
-            // كاسترول (Castrol)
-            28: 'IMG_20261015_235740_0822_92098075.jpg',
-            29: 'IMG_20261015_235741_0252_92098087.jpg',
-            30: 'IMG_20261015_235741_0068_92098087.jpg',
-            // التعاون (Al Taawon / Misr)
-            31: 'IMG_20261015_235752_0221.jpg',
-            32: 'IMG_20261015_235732_0606_92098097.jpg',
-            33: 'IMG_20261015_235751_0720_92098066.jpg',
-            34: 'IMG_20261015_235732_0610_92098097.jpg',
-            35: 'IMG_20261015_235731_0824_92098106.jpg',
-            36: 'IMG_20261015_235732_0387_92098097.jpg',
-            // باكم وباور
-            43: 'bendix_brake_fluid_small.jpg',
-            44: 'IMG_44be9a5e-9af2-4162-b7ca-10786ccc4950.png',
-            45: 'bendix_brake_fluid_big.jpg',
-            // فلاتر زيت (Oil Filters)
+            // ========== شيل (Shell) ==========
+            1: '645635_main.jpg',                                        // شيل هيليكس الترا ٥-٤٠ ٥لتر (Shell Helix Ultra 5W-40 5L)
+            2: 'IMG_bc38b4cf-0798-4b3b-bb4c-5246a4f9293b.jpg',           // شيل هيليكس HX5 ١٥-٥٠ ٤لتر (Shell HX5 15W-50 4L)
+            3: 'IMG_0a5cad68-7e2c-4a5d-aa81-428106a4040c.jpg',           // شيل هيليكس HX3 ٢٠-٥٠ ٤لتر (Shell HX3 20W-50 4L)
+            4: 'IMG_e42110ca-4c79-4868-ada0-f5b5807222a2.jpg',           // شيل هيليكس HX3 ٥٠ ٤لتر (Shell HX3 SAE50 4L)
+            5: 'IMG_28f72945-30db-4fbb-9ba8-95d17ad43a81.jpg',           // شيل ادفانس للموتوسيكل (Shell Advance 20W-50)
+            
+            // ========== موبيل (Mobil) ==========
+            6: 'IMG_2587c9b9-c8db-4129-add3-cf6a3ad41b80.jpg',           // موبيل وان ٥-٤٠ ٤لتر (Mobil 1 5W-40 4L)
+            7: 'f132798293151208163058-1.webp',                           // موبيل وان ٥-٣٠ ٤لتر (Mobil 1 5W-30 4L)
+            8: '1.jpg',                                                   // موبيل سوبر XHP ١٥-٤٠ ٤لتر (Mobil XHP 15W-40)
+            9: 'IMG_0df919b9-ac34-4a02-b5d5-2b00ac3373b5.jpg',           // موبيل سبشيال ٢٠-٥٠ ٤لتر (Mobil Special 20W-50)
+            10: 'IMG_4f4a49cd-a0a9-4a6c-b9ce-81248e356f90.jpg',            // موبيل متعدد ٢٠-٥٠ ٤لتر (Mobil Super 20W-50)
+            11: 'IMG_4291826e-8b07-498d-9f39-a5611f27e4bd.png',             // موبيل باور ٢٢٠ ١لتر (Mobil ATF 220 1L)
+            12: 'IMG_3c630c34-6328-4ae3-893c-4cbdf8774c46.jpg',             // موبيل باور ٣٢٠ ١لتر (Mobil ATF 320 1L)
+            13: 'IMG_ec2e467d-5616-46fd-874e-8bffdcff6d84.jpg',             // موبيل موبيلوب ٩٠ تروس (Mobilube HD 80W-90)
+            14: 'IMG_5c9c4fe9-8367-4709-9ce0-2d4d6fc6cc84.jpg',             // موبيل فورتي للموتوسيكل (Mobil Super 4-Stroke)
+            15: 'IMG_20261015_235751_0832_92098066.jpg',                    // موبيل دلفاك ٢٠ لتر (Mobil Delvac MX 20L)
+            37: 'IMG_354a3a7a-a045-433a-87c0-23364f26032e.jpg',            // موبيل كولانت اخضر ١ لتر (Mobil Coolant Extra 1L)
+            38: 'IMG_4b81f047-0119-4444-893a-5c7c9a5760cd.jpg',            // موبيل كولانت اخضر ٤ لتر (Mobil Coolant Extra 4L)
+            39: 'IMG_16979631-2a7f-4875-b6ec-06e195ea353c.jpg',           // موبيل كولانت احمر ١ لتر (Mobil Coolant Advanced 1L)
+            40: 'IMG_ecca3ac3-5984-4ed1-9cf4-addf8ad0a45a.jpg',           // موبيل كولانت احمر ٤ لتر (Mobil Coolant Advanced 4L)
+            
+            // ========== توتال (Total) ==========
+            16: 'IMG_20261015_235732_0600_92098097.jpg',                   // توتال كوارتز ٧٠٠٠ ١٠-٤٠ ٥لتر (Total Quartz 7000 10W-40 5L)
+            17: 'IMG_20261015_235732_0600_92098097.jpg',                   // توتال كوارتز انيو ٥-٤٠ ٤لتر (Total Quartz 7000)
+            18: 'IMG_20261015_235732_0372_92098097.jpg',                   // توتال كوارتز ٥٠٠٠ ٤لتر (Total Quartz 5000 20W-50 4L)
+            19: 'IMG_20261015_235731_0738_92098106.jpg',                   // توتال موتور اويل ٥٠-٢٠ ٤لتر (Total Motor Oil 20W-50 4L)
+            20: 'IMG_20261015_235731_0738_92098106.jpg',                   // توتال كوارتز ٣٠٠٠ ٤لتر
+            21: 'IMG_20261015_235731_0788_92098106.jpg',                   // توتال موتور اويل ٥٠ ٤لتر (Total Motor Oil SAE50)
+            22: 'file_00000000f44481f48628af296bbd9bb4.png',               // توتال فورتي للموتوسيكل (Total Hi-Perf 4T)
+            41: 'IMG_b3ea1bbc-1a9c-40ae-97b2-75168f712fac.jpg',           // توتال كول ماء اخضر ٥ لتر (Total Hi-Perf 4T 300 1L - placeholder)
+            42: 'IMG_b3ea1bbc-1a9c-40ae-97b2-75168f712fac.jpg',           // توتال كول ماء ازرق ٥ لتر
+            
+            // ========== مانول (Mannol) ==========
+            23: 'IMG_20261015_235800_0525_92098048.jpg',                   // مانول سفاري ٥٠-٢٠ ٤لتر (Mannol Favorit 15W-50)
+            24: 'IMG_20261015_235800_0525_92098048.jpg',                   // مانول فيفروت ٥٠-١٥ ٤لتر (Mannol Favorit 15W-50)
+            25: 'IMG_20261015_235800_0298_92098048.jpg',                   // مانول سيراميك ٤٠-١٠ ٤لتر (Mannol Legend Formula - closest)
+            26: 'IMG_20261015_235800_0298_92098048.jpg',                   // مانول ايليت ٤٠-٥ ٤لتر (Mannol Legend Formula C5 0W-20)
+            27: 'IMG_20261015_235800_0298_92098048.jpg',                   // مانول فورميولا ٢٠-٠ ٤لتر (Mannol Legend Formula C5 0W-20)
+            
+            // ========== كاسترول (Castrol) ==========
+            28: 'IMG_20261015_235740_0822_92098075.jpg',                   // كاسترول ايدج ٥-٤٠ ٤لتر (Castrol EDGE 5W-40 4L)
+            29: 'IMG_20261015_235741_0252_92098087.jpg',                   // كاسترول جيت ٥٠٠٠ ٥لتر (Castrol GTX 4L)
+            30: 'IMG_20261015_235741_0068_92098087.jpg',                   // كاسترول ماجناتيك ١٠-٤٠ ٤لتر (Castrol MAGNATEC 10W-40 4L)
+            
+            // ========== التعاون / CPC (Al Taawon / Misr) ==========
+            31: 'IMG_20261015_235752_0221.jpg',                            // التعاون ١٤٠ زيت تروس ١٦ لتر (CPC Gear Oil HP-90 16L)
+            32: 'IMG_20261015_235732_0606_92098097.jpg',                   // التعاون سوبر ستان ٤ لتر (CPC Super SJ 20W-50 4L)
+            33: 'IMG_20261015_235751_0720_92098066.jpg',                   // التعاون سوبر ستان ٢٠ لتر (CPC Super Stan 20L)
+            34: 'IMG_20261015_235732_0610_92098097.jpg',                   // التعاون اس اف ٤ لتر (CPC Super Duty SF 20W-50 4L)
+            35: 'IMG_20261015_235731_0824_92098106.jpg',                   // التعاون اس جيت ٤ لتر (CPC Super Stan 1L)
+            36: 'IMG_20261015_235732_0387_92098097.jpg',                   // التعاون اكس بي ال ٤ لتر (CPC XPL 20W-50 4L)
+            
+            // ========== باكم وباور (Brake & Power Steering) ==========
+            43: 'bendix_brake_fluid_small.jpg',                            // باكم بندكس اصلي صغير (Bendix Brake Fluid DOT3 250ml)
+            44: 'pictures_png_MN8207-1_bdx_front_1200-350x350.png',       // باور صاج امريكان ماكس (Mannol Dexron VI ATF)
+            45: 'bendix_brake_fluid_big.jpg',                              // باكم بندكس اصلي كبير (Bendix Brake Fluid DOT4 1L)
+            
+            // ========== شيل إضافي (Shell Rimula + HX5 Plus) ==========
+            77: 'IMG_5b40dc31-4a0f-4ca3-8df4-257381fe3ee1.jpg',           // شيل هيليكس HX5 بلس ٤لتر (Shell HX5 Plus Intensive Protection)
+            78: 'IMG_20261015_235731_0945_92098106.jpg',                   // شيل ريمولا R4 X 15W-40 (Shell Rimula R4 X 6L)
+            79: 'IMG_20261015_235732_0274_92098097.jpg',                   // شيل ريمولا R1 SAE-50 (Shell Rimula R1 5L)
+            
+            // ========== هافولين (Havoline / Caltex) ==========
+            80: 'IMG_20261015_235740_0758_92098075.jpg',                   // هافولين ٢٠-٥٠ ٤لتر (Havoline Motor Oil 20W-50 4L)
+            
+            // ========== ليكوي مولي (Liqui Moly) ==========
+            81: 'IMG_3d523d53-1249-4aee-9dc1-aa3590ae7f8d.jpg',           // ليكوي مولي موليجين ٥-٤٠ ١لتر (Liqui Moly Molygen 5W-40 1L)
+            
+            // ========== موتول (Motul) ==========
+            82: 'IMG_20261015_235741_0287_92098087.jpg',                   // موتول 8100 باور ٥-٥٠ ٥لتر (Motul 8100 Power 5W-50 5L)
+            83: 'IMG_20261015_235741_0459_92098087.jpg',                   // موتول 8100 اكس باور ١٠-٦٠ ٥لتر (Motul 8100 X-power 10W60 5L)
+            84: 'IMG_20261015_235741_0045_92098087.jpg',                   // موتول 8100 اكس سيس جين٢ ٥-٤٠ ٥لتر (Motul 8100 X-cess gen2 5W-40)
+            85: 'IMG_20261015_235740_0901_92098075.jpg',                   // موتول 7100 للموتوسيكل ١٠-٤٠ ١لتر (Motul 7100 10W-40 1L)
+            
+            // ========== آيسين (Aisin) ==========
+            86: 'IMG_93ec4f77-72e9-4460-91f7-f4a4c3238d7b.png',           // آيسين للموتوسيكل ٢٠-٥٠ ١لتر (Aisin 4T Motorcycle 20W-50 1L)
+            
+            // ========== موبيل دلفاك (Mobil Delvac) ==========
+            87: 'delvac-mx-5l.jpg',                                        // موبيل دلفاك MX ٢٠-٥٠ ٥لتر (Mobil Delvac MX 20W-50 5L)
+            88: 'IMG_45048d2f-2020-4a97-a328-af89e39490c6.jpg',            // موبيل دلفاك ليجند ٥لتر (Mobil Delvac Legend 1350)
+            89: 'IMG_20261015_235741_0377_92098087.jpg',                   // موبيل X3 مونوجريد ٥لتر (Mobil X3 Monograde SAE50 5L)
+            
+            // ========== هانز (Hanz ATF) ==========
+            90: 'IMG_926e0409-08f8-4a63-a49e-df2100be8c1b.jpg',            // هانز ATF سوبر فلويد (Hanz ATF Super Fluid 1L)
+            
+            // ========== مانول ديكسرون (Mannol Dexron) ==========
+            91: 'IMG_44be9a5e-9af2-4162-b7ca-10786ccc4950.png',            // مانول ديكسرون II (Mannol Dexron II 1L)
+            92: 'pictures_png_MN8207-1_bdx_front_1200-350x350.png',       // مانول ديكسرون VI (Mannol Dexron VI 1L)
+            
+            // ========== فلاتر زيت (Oil Filters) ==========
             46: 'oil_filter_generic.jpg',
             47: 'oil_filter_generic.jpg',
             48: 'oil_filter_generic.jpg',
@@ -934,7 +988,7 @@
             74: 'oil_filter_generic.jpg',
             75: 'oil_filter_generic.jpg',
             76: 'oil_filter_generic.jpg',
-            // فلاتر هواء (Air Filters)
+            // ========== فلاتر هواء (Air Filters) ==========
             49: 'air_filter_generic.jpg',
             50: 'air_filter_generic.jpg',
             51: 'air_filter_generic.jpg',
@@ -955,15 +1009,21 @@
         function detectProductBrand(name, dbBrand) {
             if (dbBrand && dbBrand !== 'أخرى') return dbBrand;
             const n = name || '';
+            if (n.includes('فلتر')) return 'فلاتر';
+            if (n.includes('ريمولا')) return 'شيل';
             if (n.includes('شيل') || n.includes('شل')) return 'شيل';
             if (n.includes('التعاون')) return 'التعاون';
-            if (n.includes('موبيل')) return 'موبيل';
+            if (n.includes('دلفاك') || n.includes('دلقاك')) return 'موبيل';
+            if (n.includes('موبيل') || n.includes('موبيلوب')) return 'موبيل';
             if (n.includes('توتال')) return 'توتال';
             if (n.includes('كاسترول')) return 'كاسترول';
-            if (n.includes('مانول')) return 'مانول';
+            if (n.includes('مانول') || n.includes('ديكسرون')) return 'مانول';
             if (n.includes('موتول')) return 'موتول';
-            if (n.includes('فلتر')) return 'فلاتر';
-            if (n.includes('باكم') || n.includes('باور')) return 'باكم وباور';
+            if (n.includes('هافولين')) return 'هافولين';
+            if (n.includes('ليكوي') || n.includes('مولي')) return 'ليكوي مولي';
+            if (n.includes('آيسين') || n.includes('ايسين')) return 'آيسين';
+            if (n.includes('هانز')) return 'هانز';
+            if (n.includes('باكم') || n.includes('باور') || n.includes('بندكس')) return 'باكم وباور';
             return 'أخرى';
         }
 
@@ -1042,13 +1102,18 @@
                 filtered = menuItems.filter(i => {
                     const b = i.brand || '';
                     const n = i.name || '';
-                    if (category === 'شيل') return b === 'شيل' || n.includes('شيل') || n.includes('شل');
+                    if (category === 'شيل') return b === 'شيل' || n.includes('شيل') || n.includes('شل') || n.includes('ريمولا');
                     if (category === 'التعاون') return b === 'التعاون' || n.includes('التعاون');
-                    if (category === 'موبيل') return b === 'موبيل' || n.includes('موبيل');
+                    if (category === 'موبيل') return b === 'موبيل' || n.includes('موبيل') || n.includes('دلفاك') || n.includes('موبيلوب');
                     if (category === 'توتال') return b === 'توتال' || n.includes('توتال');
                     if (category === 'كاسترول') return b === 'كاسترول' || n.includes('كاسترول');
-                    if (category === 'مانول') return b === 'مانول' || n.includes('مانول');
+                    if (category === 'مانول') return b === 'مانول' || n.includes('مانول') || n.includes('ديكسرون');
                     if (category === 'موتول') return b === 'موتول' || n.includes('موتول');
+                    if (category === 'هافولين') return b === 'هافولين' || n.includes('هافولين');
+                    if (category === 'ليكوي مولي') return b === 'ليكوي مولي' || n.includes('ليكوي') || n.includes('مولي');
+                    if (category === 'آيسين') return b === 'آيسين' || n.includes('آيسين') || n.includes('ايسين');
+                    if (category === 'هانز') return b === 'هانز' || n.includes('هانز');
+                    if (category === 'باكم وباور') return b === 'باكم وباور' || n.includes('باكم') || n.includes('باور') || n.includes('بندكس');
                     return b === category || n.includes(category);
                 });
             }
