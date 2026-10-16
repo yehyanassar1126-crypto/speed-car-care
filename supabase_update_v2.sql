@@ -45,15 +45,15 @@ UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'ima
 UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235731_0738_92098106.jpg' WHERE id = 20;
 UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235731_0788_92098106.jpg' WHERE id = 21;
 UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/file_00000000f44481f48628af296bbd9bb4.png' WHERE id = 22;
-UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/IMG_b3ea1bbc-1a9c-40ae-97b2-75168f712fac.jpg' WHERE id = 41;
-UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/IMG_b3ea1bbc-1a9c-40ae-97b2-75168f712fac.jpg' WHERE id = 42;
+UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/total_coolant_green.jpg' WHERE id = 41;
+UPDATE oil_products SET brand = 'توتال', category = 'oil', image_url = 'images/oil-products/total_coolant_blue.jpg' WHERE id = 42;
 
 -- مانول (Mannol) - IDs 23-27
-UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235800_0525_92098048.jpg' WHERE id = 23;
+UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/mannol_safari_20w50.png' WHERE id = 23;
 UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235800_0525_92098048.jpg' WHERE id = 24;
-UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235800_0298_92098048.jpg' WHERE id = 25;
-UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235800_0298_92098048.jpg' WHERE id = 26;
-UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235800_0298_92098048.jpg' WHERE id = 27;
+UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/mannol_ceramic_10w40.png' WHERE id = 25;
+UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/mannol_elite_5w40.png' WHERE id = 26;
+UPDATE oil_products SET brand = 'مانول', category = 'oil', image_url = 'images/oil-products/mannol_legend_ultra_0w20.png' WHERE id = 27;
 
 -- كاسترول (Castrol) - IDs 28-30
 UPDATE oil_products SET brand = 'كاسترول', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235740_0822_92098075.jpg' WHERE id = 28;
@@ -69,9 +69,9 @@ UPDATE oil_products SET brand = 'التعاون', category = 'oil', image_url = 
 UPDATE oil_products SET brand = 'التعاون', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235732_0387_92098097.jpg' WHERE id = 36;
 
 -- باكم وباور - IDs 43-45
-UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_brake_fluid_small.jpg' WHERE id = 43;
+UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_dot4_real.png' WHERE id = 43;
 UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/pictures_png_MN8207-1_bdx_front_1200-350x350.png' WHERE id = 44;
-UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_brake_fluid_big.jpg' WHERE id = 45;
+UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_dot4_real.png' WHERE id = 45;
 
 -- فلاتر - IDs 46-76
 UPDATE oil_products SET brand = 'فلاتر', category = 'filter', image_url = 'images/oil-products/oil_filter_generic.jpg' WHERE id IN (46,47,48,63,64,65,66,67,68,69,71,72,73,74,75,76);
