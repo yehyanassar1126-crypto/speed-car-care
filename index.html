@@ -928,6 +928,29 @@
         </div>
     </div>
 
+    <!-- PAYMENT REDIRECT MODAL -->
+    <div class="modal-overlay" id="paymentModal" style="z-index:10001;">
+        <div class="modal" style="max-width: 420px; text-align: center;">
+            <div class="modal-header">
+                <h3 id="payModalTitle"><i class="fas fa-wallet"></i> إتمام الدفع</h3>
+                <button class="modal-close" onclick="closePaymentModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div id="payModalIcon" style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+                <p style="color: var(--cream-dark); margin-bottom: 0.5rem;" id="payModalLabel">المبلغ المطلوب تحويله</p>
+                <div id="payModalAmount" style="font-size: 2.5rem; font-weight: 900; color: var(--gold); margin: 0.75rem 0; direction: ltr;">0 ج.م</div>
+                <div id="payModalAccount" style="background: rgba(255,255,255,0.06); border-radius: var(--radius-md); padding: 0.75rem; margin: 0.75rem 0; font-size: 0.95rem; color: var(--cream);"></div>
+                <button id="payModalCopyBtn" onclick="copyPaymentAmount()" style="background: linear-gradient(135deg, var(--gold), #c9a832); color: #1a1a2e; border: none; border-radius: var(--radius-md); padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; margin: 0.75rem 0; width: 100%; transition: all 0.3s;">
+                    <i class="fas fa-copy"></i> نسخ المبلغ
+                </button>
+                <button id="payModalGoBtn" onclick="goToPayment()" style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff; border: none; border-radius: var(--radius-md); padding: 0.75rem 1.5rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.3s;">
+                    <i class="fas fa-external-link-alt"></i> فتح التطبيق والتحويل
+                </button>
+                <p style="color: var(--cream-dark); font-size: 0.8rem; margin-top: 0.75rem; opacity: 0.7;">📋 انسخ المبلغ أولاً ثم اضغط فتح التطبيق</p>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT -->
     <script>
         // ============================================================
@@ -1497,21 +1520,76 @@
             }
         }
 
-        function handlePaymentRedirect() {
-            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        let pendingPaymentUrl = null;
+        let pendingPaymentAmount = 0;
 
-            if (selectedPaymentMethod === 'instapay') {
-                // Redirect to InstaPay link
-                window.open('https://ipn.eg/S/hima181993/instapay/4gRAXk', '_blank');
-            } else if (selectedPaymentMethod === 'orange') {
-                // Try to open Orange Cash app with the number
-                // Show instructions with the amount and number
-                const orangeMsg = `📱 أورانج كاش\n\nالمبلغ: ${totalPrice.toFixed(2)} ج.م\nالرقم: 0275606150\n\nافتح تطبيق أورانج كاش وحوّل المبلغ على الرقم ده`;
-                alert(orangeMsg);
-                // Try tel link to help copy/dial the number
-                window.open('tel:0275606150', '_self');
+        function showPaymentModal(method, amount) {
+            const modal = document.getElementById('paymentModal');
+            const icon = document.getElementById('payModalIcon');
+            const title = document.getElementById('payModalTitle');
+            const label = document.getElementById('payModalLabel');
+            const amountEl = document.getElementById('payModalAmount');
+            const accountEl = document.getElementById('payModalAccount');
+            const goBtn = document.getElementById('payModalGoBtn');
+
+            pendingPaymentAmount = amount;
+
+            amountEl.textContent = amount.toFixed(2) + ' ج.م';
+
+            if (method === 'instapay') {
+                icon.innerHTML = '⚡';
+                title.innerHTML = '<i class="fas fa-bolt"></i> الدفع عبر InstaPay';
+                label.textContent = 'المبلغ المطلوب تحويله';
+                accountEl.innerHTML = '📧 الحساب: <strong style="color:var(--gold);">hima181993@instapay</strong>';
+                goBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح InstaPay والتحويل';
+                goBtn.style.background = 'linear-gradient(135deg, #6C63FF, #4834d4)';
+                pendingPaymentUrl = 'https://ipn.eg/S/hima181993/instapay/4gRAXk';
+            } else if (method === 'orange') {
+                icon.innerHTML = '📱';
+                title.innerHTML = '<i class="fas fa-mobile-alt"></i> الدفع عبر أورانج كاش';
+                label.textContent = 'المبلغ المطلوب تحويله';
+                accountEl.innerHTML = '📞 الرقم: <strong style="color:var(--gold); font-size:1.2rem;">0275606150</strong>';
+                goBtn.innerHTML = '<i class="fas fa-external-link-alt"></i> فتح أورانج كاش والتحويل';
+                goBtn.style.background = 'linear-gradient(135deg, #FF6B00, #FF8C00)';
+                pendingPaymentUrl = 'tel:0275606150';
             }
-            // cash = no redirect needed
+
+            modal.classList.add('open');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('open');
+        }
+
+        async function copyPaymentAmount() {
+            const btn = document.getElementById('payModalCopyBtn');
+            try {
+                await navigator.clipboard.writeText(pendingPaymentAmount.toFixed(0));
+                btn.innerHTML = '<i class="fas fa-check"></i> تم نسخ المبلغ ✅';
+                btn.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+                btn.style.color = '#fff';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> نسخ المبلغ';
+                    btn.style.background = 'linear-gradient(135deg, var(--gold), #c9a832)';
+                    btn.style.color = '#1a1a2e';
+                }, 2000);
+            } catch(e) {
+                // Fallback: select text
+                const input = document.createElement('input');
+                input.value = pendingPaymentAmount.toFixed(0);
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                btn.innerHTML = '<i class="fas fa-check"></i> تم نسخ المبلغ ✅';
+                setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> نسخ المبلغ'; }, 2000);
+            }
+        }
+
+        function goToPayment() {
+            if (pendingPaymentUrl) {
+                window.location.href = pendingPaymentUrl;
+            }
         }
 
         /* Save Invoice Logic to backend */
@@ -1619,17 +1697,9 @@
                     resetAll();
                     closeOrderModal();
 
-                    // Redirect after modal closes
-                    if (paymentMethod === 'instapay') {
-                        // Copy amount to clipboard so user can paste it in InstaPay amount field
-                        try { await navigator.clipboard.writeText(paymentTotal.toFixed(0)); } catch(e) {}
-                        alert(`💰 المبلغ المطلوب: ${paymentTotal.toFixed(2)} ج.م\n\n✅ تم نسخ المبلغ تلقائياً!\nالصق المبلغ في خانة Amount في InstaPay\n\nهيتم تحويلك دلوقتي لـ InstaPay...`);
-                        window.location.href = 'https://ipn.eg/S/hima181993/instapay/4gRAXk';
-                    } else if (paymentMethod === 'orange') {
-                        // Copy amount to clipboard
-                        try { await navigator.clipboard.writeText(paymentTotal.toFixed(0)); } catch(e) {}
-                        alert(`📱 أورانج كاش\n\n💰 المبلغ: ${paymentTotal.toFixed(2)} ج.م\n📋 تم نسخ المبلغ تلقائياً!\n📞 الرقم: 0275606150\n\nافتح أورانج كاش والصق المبلغ وحوّل على الرقم ده`);
-                        window.location.href = 'tel:0275606150';
+                    // Show payment modal for InstaPay or Orange Cash
+                    if (paymentMethod === 'instapay' || paymentMethod === 'orange') {
+                        showPaymentModal(paymentMethod, paymentTotal);
                     }
                 } else {
                     alert("❌ حصل خطأ: " + result.error);
