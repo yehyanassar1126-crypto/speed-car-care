@@ -1611,11 +1611,21 @@
                         alertMessage += `\n🪑 أمامك ${cQueue} طلبات سجاد. المتوقع: ${cQueue * 2 || 2} يوم`;
                         if (result.carpetCode) alertMessage += `\nكود السجاد: ${result.carpetCode}`;
                     }
+                    // Save payment info before reset clears cart
+                    const paymentMethod = selectedPaymentMethod;
+                    const paymentTotal = total;
 
                     alert(alertMessage);
-                    handlePaymentRedirect();
                     resetAll();
                     closeOrderModal();
+
+                    // Redirect after modal closes
+                    if (paymentMethod === 'instapay') {
+                        window.location.href = 'https://ipn.eg/S/hima181993/instapay/4gRAXk';
+                    } else if (paymentMethod === 'orange') {
+                        alert(`📱 أورانج كاش\n\nالمبلغ: ${paymentTotal.toFixed(2)} ج.م\nالرقم: 0275606150\n\nافتح تطبيق أورانج كاش وحوّل المبلغ على الرقم ده`);
+                        window.location.href = 'tel:0275606150';
+                    }
                 } else {
                     alert("❌ حصل خطأ: " + result.error);
                 }
