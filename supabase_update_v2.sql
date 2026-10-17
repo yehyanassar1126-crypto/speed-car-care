@@ -69,9 +69,9 @@ UPDATE oil_products SET brand = 'التعاون', category = 'oil', image_url = 
 UPDATE oil_products SET brand = 'التعاون', category = 'oil', image_url = 'images/oil-products/IMG_20261015_235732_0387_92098097.jpg' WHERE id = 36;
 
 -- باكم وباور - IDs 43-45
-UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_dot4_real.png' WHERE id = 43;
+UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_75_small.png' WHERE id = 43;
 UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/pictures_png_MN8207-1_bdx_front_1200-350x350.png' WHERE id = 44;
-UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_dot4_real.png' WHERE id = 45;
+UPDATE oil_products SET brand = 'باكم وباور', category = 'oil', image_url = 'images/oil-products/bendix_75_big.png' WHERE id = 45;
 
 -- فلاتر - IDs 46-76
 UPDATE oil_products SET brand = 'فلاتر', category = 'filter', image_url = 'images/oil-products/oil_filter_generic.jpg' WHERE id IN (46,47,48,63,64,65,66,67,68,69,71,72,73,74,75,76);
