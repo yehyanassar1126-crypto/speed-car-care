@@ -1621,9 +1621,14 @@
 
                     // Redirect after modal closes
                     if (paymentMethod === 'instapay') {
+                        // Copy amount to clipboard so user can paste it in InstaPay amount field
+                        try { await navigator.clipboard.writeText(paymentTotal.toFixed(0)); } catch(e) {}
+                        alert(`💰 المبلغ المطلوب: ${paymentTotal.toFixed(2)} ج.م\n\n✅ تم نسخ المبلغ تلقائياً!\nالصق المبلغ في خانة Amount في InstaPay\n\nهيتم تحويلك دلوقتي لـ InstaPay...`);
                         window.location.href = 'https://ipn.eg/S/hima181993/instapay/4gRAXk';
                     } else if (paymentMethod === 'orange') {
-                        alert(`📱 أورانج كاش\n\nالمبلغ: ${paymentTotal.toFixed(2)} ج.م\nالرقم: 0275606150\n\nافتح تطبيق أورانج كاش وحوّل المبلغ على الرقم ده`);
+                        // Copy amount to clipboard
+                        try { await navigator.clipboard.writeText(paymentTotal.toFixed(0)); } catch(e) {}
+                        alert(`📱 أورانج كاش\n\n💰 المبلغ: ${paymentTotal.toFixed(2)} ج.م\n📋 تم نسخ المبلغ تلقائياً!\n📞 الرقم: 0275606150\n\nافتح أورانج كاش والصق المبلغ وحوّل على الرقم ده`);
                         window.location.href = 'tel:0275606150';
                     }
                 } else {
