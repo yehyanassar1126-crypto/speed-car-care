@@ -176,6 +176,7 @@ tfoot td{font-weight:900;background:var(--panel-2)}
         <button class="tab" data-tab="invoices"><i class="fas fa-file-invoice"></i> كل الفواتير</button>
         <button class="tab" data-tab="oil"><i class="fas fa-oil-can"></i> مخزن الزيت</button>
         <button class="tab" data-tab="admins"><i class="fas fa-user-shield"></i> المديرين</button>
+        <button class="tab" data-tab="feedback"><i class="fas fa-star"></i> التقييمات <span class="count zero" id="feedbackCount">0</span></button>
     </nav>
 
     <!-- REQUESTS -->
@@ -253,6 +254,28 @@ tfoot td{font-weight:900;background:var(--panel-2)}
         </div>
         <p class="note">أي مدير يقدر يضيف أو يمسح مديرين تانيين ويغيّر كلمات السر. كلمات السر متخزنة مشفّرة ومحدش (حتى أنا) يقدر يشوفها. بعد 5 محاولات غلط الحساب بيتقفل 15 دقيقة.</p>
     </section>
+
+    <!-- FEEDBACK -->
+    <section class="pane" id="pane-feedback">
+        <div class="toolbar">
+            <select class="input" id="fbFilter" style="width:auto;min-width:160px">
+                <option value="all">كل التقييمات</option>
+                <option value="5">⭐⭐⭐⭐⭐ ممتاز</option>
+                <option value="4">⭐⭐⭐⭐ جيد جداً</option>
+                <option value="3">⭐⭐⭐ جيد</option>
+                <option value="2">⭐⭐ مقبول</option>
+                <option value="1">⭐ ضعيف</option>
+            </select>
+            <span class="note" id="fbInfo" style="margin:0"></span>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead><tr><th>التاريخ</th><th>العميل</th><th>التليفون</th><th>التقييم</th><th>النوع</th><th>الرسالة</th></tr></thead>
+                <tbody id="fbRows"></tbody>
+            </table>
+        </div>
+    </section>
+
 </main>
 
 <!-- MODALS -->
@@ -306,7 +329,7 @@ const TZ = 'Africa/Cairo';
 
 let token = sessionStorage.getItem('scc_admin_token') || '';
 let me = null, admins = [];
-let pending = [], invoices = [], oils = [], oilLog = [], dailyTotals = [];
+let pending = [], invoices = [], oils = [], oilLog = [], dailyTotals = [], feedbacks = [];
 let knownPendingIds = new Set(), firstPendingLoad = true;
 let pollTimer = null;
 
@@ -375,8 +398,8 @@ async function start() {
 
 async function loadAll() {
     try {
-        const [p, i, o, d, a] = await Promise.all([api('pending'), api('invoices'), api('oil_report'), api('daily_totals'), api('admins')]);
-        pending = p.data; invoices = i.data; oils = o.data; oilLog = o.log; dailyTotals = d.data; admins = a.data;
+        const [p, i, o, d, a, fb] = await Promise.all([api('pending'), api('invoices'), api('oil_report'), api('daily_totals'), api('admins'), api('feedback')]);
+        pending = p.data; invoices = i.data; oils = o.data; oilLog = o.log; dailyTotals = d.data; admins = a.data; feedbacks = fb.data || [];
         notePending(); renderAll();
     } catch (e) { toast(e.message, true); }
 }
@@ -397,7 +420,7 @@ document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
 });
 
 /* ---------------- render ---------------- */
-function renderAll() { renderToday(); renderPending(); renderDay(); renderInvoices(); renderOil(); renderAdmins(); }
+function renderAll() { renderToday(); renderPending(); renderDay(); renderInvoices(); renderOil(); renderAdmins(); renderFeedback(); }
 
 function sumBy(list) {
     const s = { total: 0, count: list.length, cash: 0, card: 0, instapay: 0, wallet: 0, none: 0 };
@@ -621,6 +644,31 @@ async function delAdmin(id) {
     if (!confirm('تمسح المدير ' + (a.display_name || a.username) + '؟')) return;
     try { await api('admin_delete', { id }); toast('تم المسح'); await loadAll(); } catch (e) { toast(e.message, true); }
 }
+
+
+/* ---------------- feedback ---------------- */
+function starsHtml(n) {
+    return '<span style="color:#fbbf24;letter-spacing:2px">' + '★'.repeat(n) + '☆'.repeat(5 - n) + '</span>';
+}
+function renderFeedback() {
+    const filter = $('fbFilter').value;
+    let list = feedbacks;
+    if (filter !== 'all') list = list.filter(f => String(f.rating) === filter);
+    $('fbInfo').textContent = list.length + ' تقييم';
+    $('feedbackCount').textContent = feedbacks.length;
+    $('feedbackCount').classList.toggle('zero', feedbacks.length === 0);
+    $('fbRows').innerHTML = list.length ? list.map(f => `
+        <tr>
+            <td>${f.created_at ? dateStr(f.created_at) + '<br><small style="color:var(--muted)">' + timeStr(f.created_at) + '</small>' : '—'}</td>
+            <td><b>${esc(f.customer_name || '—')}</b></td>
+            <td style="direction:ltr;text-align:right">${esc(f.customer_phone || '—')}</td>
+            <td>${starsHtml(f.rating || 0)}<br><small>${f.rating || 0}/5</small></td>
+            <td><span class="tag">${esc(f.feedback_type || '—')}</span></td>
+            <td style="max-width:300px;white-space:pre-wrap">${esc(f.message || '—')}</td>
+        </tr>`).join('')
+        : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">مفيش تقييمات لسه</td></tr>';
+}
+$('fbFilter').onchange = renderFeedback;
 
 /* ---------------- Excel export (from day one until now) ---------------- */
 $('exportBtn').onclick = async () => {

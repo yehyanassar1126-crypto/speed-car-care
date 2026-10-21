@@ -188,6 +188,13 @@ export default async function handler(req, res) {
                 return res.json({ success: true, data });
             }
 
+            // ---------------- Feedback ----------------
+            case 'feedback': {
+                const data = await fetchAll(() =>
+                    supabase.from('customer_feedback').select('*').order('created_at', { ascending: false }));
+                return res.json({ success: true, data });
+            }
+
             // ---------------- Oil inventory ----------------
             case 'oil_report': {
                 const { data: products, error: pErr } = await supabase
